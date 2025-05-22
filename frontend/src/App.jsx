@@ -1,10 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React from "react";
+import BigTradesTracker from "./components/BigTradesTracker";
 
+function App() {
+  return <BigTradesTracker />;
+}
+
+export default App;
 function App() {
   const [trades, setTrades] = useState([]);
 
   useEffect(() => {
-    const socket = new WebSocket("ws://localhost:8000/ws/trades");
+    const socket = new WebSocket("ws://big-trades-tracker.onrender.com");
 
     socket.onmessage = function(event) {
       const trade = JSON.parse(event.data);
