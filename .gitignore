@@ -5,7 +5,7 @@ __pycache__/
 .env
 *.env
 *.log
-
+*.xml
 # Venv
 venv/
 env/
@@ -15,7 +15,7 @@ node_modules/
 dist/
 .build/
 .cache/
-
+.idea/
 # أنظمة تشغيل
 .DS_Store
 Thumbs.db
