@@ -8,7 +8,7 @@ export default function BigTradesTracker() {
     const socket = new WebSocket("wss://big-trades-backend.onrender.com/ws/trades");
     socket.onmessage = function(event) {
   const trade = JSON.parse(event.data);
-  console.log(trade); // عرض الصفقة في الكونسول
+    console.log("New trade:", data);// عرض الصفقة في الكونسول
 };
 
     socket.onerror = (error) => {
