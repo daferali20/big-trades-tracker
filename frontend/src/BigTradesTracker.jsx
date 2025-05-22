@@ -5,7 +5,8 @@ export default function BigTradesTracker() {
   const [trades, setTrades] = useState([]);
 
   useEffect(() => {
-    const socket = new WebSocket('ws://localhost:8000/ws/trades');
+    const socket = new WebSocket("wss://big-trades-backend.onrender.com/ws/trades");
+
 
     socket.onmessage = (event) => {
       const data = JSON.parse(event.data);
