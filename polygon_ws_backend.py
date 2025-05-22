@@ -15,7 +15,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-API_KEY = "WT3I1S4AXdekRj1qHZDD9TyD8Fx5tQjC"  # ← ضع مفتاح API من polygon.io
+import os
+API_KEY = os.getenv( "WT3I1S4AXdekRj1qHZDD9TyD8Fx5tQjC")  # ← ضع مفتاح API من polygon.io
 SYMBOL = "AAPL"  # ← يمكنك تغييره لأي سهم
 
 async def polygon_trade_stream(websocket: WebSocket):
