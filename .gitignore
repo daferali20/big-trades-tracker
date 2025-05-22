@@ -1,8 +1,25 @@
-# For Python backend
+# بيئة بايثون (backend)
 __pycache__/
-*.pyc
+*.py[cod]
+*.sqlite3
 .env
+*.env
+*.log
 
-# For Node frontend
+# Venv
+venv/
+env/
+
+# Node (frontend)
 node_modules/
 dist/
+.build/
+.cache/
+
+# أنظمة تشغيل
+.DS_Store
+Thumbs.db
+
+# ملفات أخرى
+*.bak
+*.swp
