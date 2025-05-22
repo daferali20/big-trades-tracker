@@ -1,5 +1,5 @@
 import React from 'react';
-import BigTradesTracker from './BigTradesTracker';
+import BigTradesTracker from './components/BigTradesTracker';
 
 function App() {
   return (
