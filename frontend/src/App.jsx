@@ -10,7 +10,7 @@ function App() {
   const [trades, setTrades] = useState([]);
 
   useEffect(() => {
-    const socket = new WebSocket("ws://big-trades-tracker.onrender.com");
+    const socket = new WebSocket("wss://big-trades-tracker.onrender.com/ws/trades");
 
     socket.onmessage = function(event) {
       const trade = JSON.parse(event.data);
