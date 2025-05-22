@@ -6,12 +6,10 @@ export default function BigTradesTracker() {
 
   useEffect(() => {
     const socket = new WebSocket("wss://big-trades-backend.onrender.com/ws/trades");
-
-
-    socket.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      setTrades(data);
-    };
+    socket.onmessage = function(event) {
+  const trade = JSON.parse(event.data);
+  console.log(trade); // عرض الصفقة في الكونسول
+};
 
     socket.onerror = (error) => {
       console.error('WebSocket error:', error);
