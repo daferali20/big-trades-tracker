@@ -5,18 +5,20 @@ export default function BigTradesTracker() {
   const [trades, setTrades] = useState([]);
 
   useEffect(() => {
-    const socket = new WebSocket("wss://big-trades-backend.onrender.com/ws/trades");
-    socket.onmessage = function(event) {
-  const trade = JSON.parse(event.data);
-    console.log("New trade:", data);// عرض الصفقة في الكونسول
-};
+  const socket = new WebSocket("wss://big-trades-backend.onrender.com/ws/trades");
 
-    socket.onerror = (error) => {
-      console.error('WebSocket error:', error);
-    };
+  socket.onmessage = function(event) {
+    const trade = JSON.parse(event.data);
+    console.log("New trade:", trade);
+    setTrades(prev => [trade, ...prev.slice(0, 19)]); // عرض آخر 20 صفقة
+  };
 
-    return () => socket.close();
-  }, []);
+  socket.onerror = (error) => {
+    console.error('WebSocket error:', error);
+  };
+
+  return () => socket.close();
+}, []);
 
   return (
     <div className="p-6 bg-gray-100 min-h-screen">
