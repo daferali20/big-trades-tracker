@@ -1,0 +1,8 @@
+# For Python backend
+__pycache__/
+*.pyc
+.env
+
+# For Node frontend
+node_modules/
+dist/
