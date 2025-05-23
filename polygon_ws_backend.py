@@ -26,7 +26,7 @@ async def polygon_trade_stream(websocket: WebSocket):
         await polygon_ws.send(json.dumps({"action": "auth", "params": API_KEY}))
         await polygon_ws.send(json.dumps({"action": "subscribe", "params": f"T.{SYMBOL}"}))
 
-        MIN_VALUE = 100 # ← أقل قيمة صفقة (10 دولار مثلاً)
+        MIN_VALUE = 1 # ← أقل قيمة صفقة (10 دولار مثلاً)
 
         while True:
             message = await polygon_ws.recv()
