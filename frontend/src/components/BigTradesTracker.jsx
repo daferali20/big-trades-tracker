@@ -48,5 +48,5 @@ function BigTradesTracker() {
     </div>
   );
 }
-
+print("✅ Received from polygon:", data)
 export default BigTradesTracker;
