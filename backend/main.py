@@ -30,18 +30,26 @@ async def polygon_trade_stream(websocket: WebSocket):
         await polygon_ws.send(json.dumps({"action": "auth", "params": API_KEY}))
         await polygon_ws.send(json.dumps({"action": "subscribe", "params": f"T.{SYMBOL}"}))
 
+        MIN_VALUE = 1  # ← أقل قيمة صفقة (10 دولار مثلاً)
+
         while True:
             message = await polygon_ws.recv()
             data = json.loads(message)
             if isinstance(data, list) and len(data) > 0 and data[0]["ev"] == "T":
-                trade = {
-                    "symbol": data[0].get("sym", ""),
-                    "price": data[0].get("p", 0),
-                    "volume": data[0].get("s", 0),
-                    "timestamp": data[0].get("t", ""),
-                    "side": "Buy/Sell"
-                }
-                await websocket.send_json(trade)
+                price = data[0].get("p", 0)
+                volume = data[0].get("s", 0)
+                value = price * volume
+
+                if value >= MIN_VALUE:
+                    trade = {
+                        "symbol": data[0].get("sym", ""),
+                        "price": price,
+                        "volume": volume,
+                        "timestamp": data[0].get("t", ""),
+                        "side": "Buy/Sell"
+                    }
+                    await websocket.send_json(trade)
+
 
 @app.websocket("/ws/trades")
 async def websocket_endpoint(websocket: WebSocket):
