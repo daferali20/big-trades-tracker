@@ -7,9 +7,11 @@ function BigTradesTracker() {
     const socket = new WebSocket("wss://big-trades-tracker.onrender.com/ws/trades");
 
     socket.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      setTrades(prev => [data, ...prev.slice(0, 49)]); // عرض آخر 50 صفقة فقط
-    };
+  const data = JSON.parse(event.data);
+  console.log("📩 Received trade:", data); // تحقق من ظهور البيانات هنا
+  setTrades(prev => [data, ...prev.slice(0, 49)]);
+};
+
 
     socket.onerror = (err) => {
       console.error("WebSocket error:", err);
