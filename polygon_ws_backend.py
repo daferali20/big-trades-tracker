@@ -19,7 +19,7 @@ import os
 API_KEY = os.getenv("API_KEY", "WT3I1S4AXdekRj1qHZDD9TyD8Fx5tQjC")
   # ← ضع مفتاح API من polygon.io
 SYMBOL = "TSLA"  # ← يمكنك تغييره لأي سهم
-
+WATCHED_SYMBOLS = ["AAPL", "MSFT", "GOOGL", "AMZN", "META"]
 async def polygon_trade_stream(websocket: WebSocket):
     uri = "wss://socket.polygon.io/stocks"
     async with websockets.connect(uri) as polygon_ws:
