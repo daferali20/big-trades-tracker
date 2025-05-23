@@ -59,3 +59,4 @@ async def websocket_endpoint(websocket: WebSocket):
     except Exception as e:
         print("❌ WebSocket Error:", e)
         await websocket.close()
+print("✅ Received from polygon:", data)
