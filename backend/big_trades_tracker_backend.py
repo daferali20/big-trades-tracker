@@ -22,7 +22,7 @@ app.add_middleware(
 # ===== Configuration =====
 API_KEY = "WT3I1S4AXdekRj1qHZDD9TyD8Fx5tQjCY"
 WATCHED_SYMBOLS = ["AAPL", "MSFT", "GOOGL", "AMZN", "META"]  # Example: Top S&P 500 stocks
-LARGE_TRADE_THRESHOLD = 100  # in dollars (e.g., $100K)
+LARGE_TRADE_THRESHOLD = 1  # in dollars (e.g., $100K)
 
 # ===== Helper function to fetch live trades (Mocked here) =====
 async def fetch_live_trades(symbol: str):
