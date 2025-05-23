@@ -22,13 +22,16 @@ def root():
     return {"message": "✅ WebSocket server for big trades is running. Connect to /ws/trades"}
 
 API_KEY = os.getenv("API_KEY", "WT3I1S4AXdekRj1qHZDD9TyD8Fx5tQjC")  # مفتاح افتراضي للاختبار
-SYMBOL = "TSLA"
+SYMBOLS = ["AAPL", "MSFT", "GOOG", "TSLA", "AMZN"]  # أسهم مؤثرة
 
 async def polygon_trade_stream(websocket: WebSocket):
     uri = "wss://socket.polygon.io/stocks"
     async with websockets.connect(uri) as polygon_ws:
         await polygon_ws.send(json.dumps({"action": "auth", "params": API_KEY}))
-        await polygon_ws.send(json.dumps({"action": "subscribe", "params": f"T.{SYMBOL}"}))
+        await polygon_ws.send(json.dumps({
+    "action": "subscribe",
+    "params": ",".join([f"T.{symbol}" for symbol in SYMBOLS])
+}))
 
         MIN_VALUE = 0  # ← أقل قيمة صفقة (10 دولار مثلاً)
 
