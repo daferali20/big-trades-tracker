@@ -22,7 +22,7 @@ def root():
     return {"message": "✅ WebSocket server for big trades is running. Connect to /ws/trades"}
 
 API_KEY = os.getenv("API_KEY", "WT3I1S4AXdekRj1qHZDD9TyD8Fx5tQjC")  # مفتاح افتراضي للاختبار
-SYMBOL = "AAPL"
+SYMBOL = "TSLA"
 
 async def polygon_trade_stream(websocket: WebSocket):
     uri = "wss://socket.polygon.io/stocks"
