@@ -4,21 +4,16 @@ function BigTradesTracker() {
   const [trades, setTrades] = useState([]);
 
   useEffect(() => {
-    const socket = new WebSocket("wss://big-trades-tracker.onrender.com/ws/trades");
+  const mockData = {
+    symbol: "AAPL",
+    price: 150.25,
+    volume: 100,
+    timestamp: Date.now(),
+    side: "Buy"
+  };
+  setTrades([mockData]);
+}, []);
 
-    socket.onmessage = (event) => {
-  const data = JSON.parse(event.data);
-  console.log("📩 Received trade:", data); // تحقق من ظهور البيانات هنا
-  setTrades(prev => [data, ...prev.slice(0, 49)]);
-};
-
-
-    socket.onerror = (err) => {
-      console.error("WebSocket error:", err);
-    };
-
-    return () => socket.close();
-  }, []);
 
   return (
     <div style={{ padding: '2rem' }}>
