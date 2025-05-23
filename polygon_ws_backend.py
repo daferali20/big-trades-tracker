@@ -18,15 +18,16 @@ app.add_middleware(
 import os
 API_KEY = os.getenv("API_KEY", "WT3I1S4AXdekRj1qHZDD9TyD8Fx5tQjC")
   # ← ضع مفتاح API من polygon.io
-SYMBOL = "TSLA"  # ← يمكنك تغييره لأي سهم
-WATCHED_SYMBOLS = ["AAPL", "MSFT", "GOOGL", "AMZN", "META"]
+SYMBOLS = ["AAPL", "MSFT", "GOOG", "TSLA", "AMZN"]  # أسهم مؤثرة
 async def polygon_trade_stream(websocket: WebSocket):
     uri = "wss://socket.polygon.io/stocks"
     async with websockets.connect(uri) as polygon_ws:
         await polygon_ws.send(json.dumps({"action": "auth", "params": API_KEY}))
-        await polygon_ws.send(json.dumps({"action": "subscribe", "params": f"T.{SYMBOL}"}))
-
-        MIN_VALUE = 1 # ← أقل قيمة صفقة (10 دولار مثلاً)
+      await polygon_ws.send(json.dumps({
+    "action": "subscribe",
+    "params": ",".join([f"T.{symbol}" for symbol in SYMBOLS])
+}))
+        MIN_VALUE = 100 # ← أقل قيمة صفقة (10 دولار مثلاً)
 
         while True:
             message = await polygon_ws.recv()
