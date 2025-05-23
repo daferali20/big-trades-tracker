@@ -38,6 +38,9 @@ async def polygon_trade_stream(websocket: WebSocket):
                     "side": "Buy/Sell"
                 }
                 await websocket.send_json(trade)
+@app.get("/")
+def read_root():
+    return {"message": "✅ WebSocket server is running. Connect to /ws/trades"}
 
 @app.websocket("/ws/trades")
 async def websocket_endpoint(websocket: WebSocket):
