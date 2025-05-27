@@ -6,7 +6,7 @@ function BigTradesTracker() {
   const [trades, setTrades] = useState([]);
   const [stockInfo, setStockInfo] = useState({});
   const [useMock, setUseMock] = useState(false);
-  const [selectedSymbol, setSelectedSymbol] = useState(NULL);
+  const [selectedSymbol, setSelectedSymbol] = useState(null);
 
   useEffect(() => {
     const socket = new WebSocket("ws://localhost:8000/ws/mock-trades");
@@ -90,7 +90,7 @@ useEffect(() => {
         <div className="sidebar">
           <h4>🧾 قائمة الأسهم</h4>
           <ul>
-            {Object.keys(stockInfo).map(TSLA => (
+            {Object.keys(stockInfo).map(symbol => (
               <li
                 key={symbol}
                 onClick={() => setSelectedSymbol(symbol)}
@@ -144,7 +144,7 @@ useEffect(() => {
           style={{ marginRight: '1rem', padding: '0.3rem', minWidth: '150px' }}
         >
           <option value="" disabled>اختر رمز السهم</option>
-          {Object.keys(stockInfo).map((TSLA) => (
+          {Object.keys(stockInfo).map((symbol) => (
             <option key={symbol} value={symbol}>{symbol}</option>
           ))}
         </select>
