@@ -143,9 +143,9 @@ useEffect(() => {
           onChange={(e) => setSelectedSymbol(e.target.value)}
           style={{ marginRight: '1rem', padding: '0.3rem', minWidth: '150px' }}
         >
-          <option value="" disabled>اختر رمز السهم</option>
+          <option value="" disabled>TSLA</option>
           {Object.keys(stockInfo).map((symbol) => (
-            <option key={symbol} value={symbol}>{TSLA}</option>
+            <option key={symbol} value={symbol}>{symbol}</option>
           ))}
         </select>
       </div>
