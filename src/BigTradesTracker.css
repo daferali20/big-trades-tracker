@@ -1,0 +1,141 @@
+.big-trades-container {
+  max-width: 1200px;
+  margin: auto;
+  padding: 2rem;
+  font-family: 'Segoe UI', sans-serif;
+  background: #f1f3f6;
+  border-radius: 20px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+/* القائمة الجانبية */
+.sidebar {
+  width: 200px;
+  background: white;
+  border-radius: 15px;
+  padding: 1rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+}
+
+.sidebar li {
+  padding: 10px;
+  margin-bottom: 5px;
+  background-color: #f5f5f5;
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.sidebar li:hover {
+  background-color: #d0e7ff;
+}
+
+.sidebar .active-symbol {
+  background-color: #007bff;
+  color: white;
+  font-weight: bold;
+}
+
+/* الجدول */
+.table-container {
+  flex-grow: 1;
+  overflow-x: auto;
+  background: white;
+  border-radius: 15px;
+  box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+  padding: 1rem;
+}
+
+.trades-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.trades-table th, .trades-table td {
+  padding: 10px;
+  text-align: center;
+  border-bottom: 1px solid #eee;
+}
+
+.trades-table th {
+  background-color: #f9f9f9;
+  color: #444;
+}
+
+.trade-buy {
+  background-color: #e6ffe6;
+}
+
+.trade-sell {
+  background-color: #ffe6e6;
+}
+
+.trade-buy td,
+.trade-sell td {
+  font-weight: bold;
+}
+
+/* شارت وتحليل فني */
+.card-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.card {
+  background: #2c1212;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+  padding: 1rem;
+  text-align: center;
+  min-width: 150px;
+  flex: 1;
+}
+
+.card-label {
+  font-size: 0.9rem;
+  color: #888;
+}
+
+.card-value {
+  font-size: 1.3rem;
+  font-weight: bold;
+  margin-top: 0.3rem;
+}
+
+/* تحديد السهم */
+#stock-select {
+  border-radius: 8px;
+  border: 1px solid #c55959;
+  padding: 6px 12px;
+}
+
+/* توصيات */
+h3 {
+  margin-top: 2rem;
+  color: #333;
+}
+/* توزيع العناصر بشكل أفقي */
+.content-layout {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+  align-items: flex-start;
+  flex-wrap: wrap; /* حتى لا تنكسر العناصر على الشاشات الصغيرة */
+}
+.layout-row {
+  display: flex;
+  flex-direction: row;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+  align-items: flex-start;
+  flex-wrap: nowrap; /* نمنع الانكسار التلقائي */
+}
+
