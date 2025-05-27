@@ -7,45 +7,59 @@ function BigTradesTracker() {
   const [stockInfo, setStockInfo] = useState({});
   const [useMock, setUseMock] = useState(false);
   const [selectedSymbol, setSelectedSymbol] = useState('TSLA'); // تغيير هنا لجعل TSLA افتراضي
-
-  useEffect(() => {
+ const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  
+ // دالة لجلب بيانات السهم من Polygon.io
+  const fetchStockDataFromPolygon = async (symbol) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetch(
+        `https://api.polygon.io/v3/reference/tickers/${symbol}?apiKey=${process.env.REACT_APP_POLYGON_API_KEY}`
+      );
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch stock data');
+      }
+      
+      const data = await response.json();
+      
+      // جلب البيانات الفنية الإضافية
+      const technicalResponse = await fetch(
+        `https://api.polygon.io/v1/indicators/sma/${symbol}?timespan=day&adjusted=true&window=50&series_type=close&apiKey=${process.env.REACT_APP_POLYGON_API_KEY}`
+      );
+      
+      const technicalData = await technicalResponse.json();
+      
+      return {
+        symbol: data.results.ticker,
+        name: data.results.name,
+        currentPrice: data.results.lastSale?.price || 0,
+        week52High: data.results.week52High,
+        week52Low: data.results.week52Low,
+        ma50: technicalData.results.values[0]?.value || 0,
+        ma200: technicalData.results.values[0]?.value || 0,
+        // يمكنك إضافة المزيد من البيانات حسب احتياجاتك
+      };
+    } catch (err) {
+      console.error("Error fetching from Polygon.io:", err);
+      setError("فشل في جلب بيانات السهم. يرجى المحاولة لاحقاً.");
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+useEffect(() => {
     // جلب بيانات TSLA أولاً عند التحميل
     const loadInitialStock = async () => {
-      try {
-        const res = await fetch(`http://localhost:8000/stock-info/TSLA`);
-        const info = await res.json();
-        setStockInfo(prev => ({ ...prev, TSLA: info }));
-      } catch (err) {
-        console.error("فشل جلب بيانات السهم:", err);
+      const tslaData = await fetchStockDataFromPolygon('TSLA');
+      if (tslaData) {
+        setStockInfo(prev => ({ ...prev, TSLA: tslaData }));
       }
     };
     loadInitialStock();
-
-    const socket = new WebSocket("ws://localhost:8000/ws/mock-trades");
-    const timeout = setTimeout(() => {
-      setUseMock(true);
-      socket.close();
-    }, 7000);
-
-    socket.onmessage = async (event) => {
-      clearTimeout(timeout);
-      const data = JSON.parse(event.data);
-
-      if (data.price * data.volume >= 500) {
-        setTrades(prev => [data, ...prev.slice(0, 49)]);
-
-        if (!stockInfo[data.symbol]) {
-          try {
-            const res = await fetch(`http://localhost:8000/stock-info/${data.symbol}`);
-            const info = await res.json();
-            setStockInfo(prev => ({ ...prev, [data.symbol]: info }));
-          } catch (err) {
-            console.error("فشل جلب بيانات السهم:", err);
-          }
-        }
-      }
-    };
-
     socket.onerror = (err) => console.error("WebSocket Error:", err);
     socket.onclose = () => console.log("❌ WebSocket مغلق");
 
@@ -84,7 +98,6 @@ function BigTradesTracker() {
 
   const { ups, downs } = getRecommendations();
   const symbolToShow = selectedSymbol || (trades.length > 0 ? trades[0].symbol : null);
-
 
   return (
     <div className="big-trades-container">
