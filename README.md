@@ -27,7 +27,7 @@ big-trades-tracker/
 ⚙️
 تأكد من أن WebSocket في BigTradesTracker.jsx يشير إلى:
 
-const socket = new WebSocket('ws://localhost:8000/ws/trades');
+
 
 🧠 مستقبلًا يمكنك:
 
