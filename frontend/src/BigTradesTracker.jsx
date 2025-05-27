@@ -1,8 +1,8 @@
 import './BigTradesTrackerNew.css';
 import React, { useEffect, useState } from 'react';
-import TradingViewChart from './TradingViewChart';
+import TradingViewChartNew from './TradingViewChartNew';
 
-function BigTradesTracker() {
+function BigTradesTrackerNew() {
   const [trades, setTrades] = useState([]);
   const [stockInfo, setStockInfo] = useState({});
   const [useMock, setUseMock] = useState(false);
@@ -28,14 +28,14 @@ function BigTradesTracker() {
             const info = await res.json();
             setStockInfo(prev => ({ ...prev, [data.symbol]: info }));
           } catch (err) {
-            console.error("فشل جلب بيانات السهم:", err);
+            console.error("Failed fetching stock info:", err);
           }
         }
       }
     };
 
     socket.onerror = (err) => console.error("WebSocket Error:", err);
-    socket.onclose = () => console.log("❌ WebSocket مغلق");
+    socket.onclose = () => console.log("WebSocket closed");
 
     return () => {
       clearTimeout(timeout);
@@ -45,7 +45,7 @@ function BigTradesTracker() {
 
   useEffect(() => {
     if (!useMock) return;
-
+    
     const interval = setInterval(() => {
       const mockTrade = {
         symbol: ["AAPL", "TSLA", "NVDA", "MSFT", "AMZN"][Math.floor(Math.random() * 5)],
@@ -60,13 +60,6 @@ function BigTradesTracker() {
     }, 2000);
     return () => clearInterval(interval);
   }, [useMock]);
-// تحديد رمز افتراضي بمجرد تحميل بيانات السهم
-useEffect(() => {
-  if (!selectedSymbol && Object.keys(stockInfo).length > 0) {
-    const firstSymbol = Object.keys(stockInfo)[0];
-    setSelectedSymbol(firstSymbol);
-  }
-}, [stockInfo, selectedSymbol]);
 
   const getRecommendations = () => {
     const ups = [], downs = [];
@@ -83,13 +76,12 @@ useEffect(() => {
   return (
     <div className="big-trades-container">
       <h2 style={{ textAlign: 'center' }}>
-        📊 {useMock ? "صفقات وهمية كبيرة (Mock)" : "الصفقات الكبيرة للأسهم"}
+        📊 {useMock ? "Mock Big Trades" : "Big Stock Trades"}
       </h2>
 
       <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
-        {/* قائمة الأسهم */}
         <div className="sidebar">
-          <h4>🧾 قائمة الأسهم</h4>
+          <h4>🧾 Stock List</h4>
           <ul>
             {Object.keys(stockInfo).map(symbol => (
               <li
@@ -103,17 +95,16 @@ useEffect(() => {
           </ul>
         </div>
 
-        {/* جدول الصفقات */}
         <div className="table-container">
           <table className="trades-table">
             <thead>
               <tr>
-                <th>الرمز</th>
-                <th>السعر</th>
-                <th>الكمية</th>
-                <th>القيمة</th>
-                <th>الوقت</th>
-                <th>الصفقة</th>
+                <th>Symbol</th>
+                <th>Price</th>
+                <th>Volume</th>
+                <th>Value</th>
+                <th>Time</th>
+                <th>Side</th>
               </tr>
             </thead>
             <tbody>
@@ -126,7 +117,7 @@ useEffect(() => {
                   <td>{trade.price}</td>
                   <td>{trade.volume}</td>
                   <td>{(trade.price * trade.volume).toLocaleString()}</td>
-                  <td>{new Date(trade.timestamp).toLocaleTimeString('ar-EG')}</td>
+                  <td>{new Date(trade.timestamp).toLocaleTimeString('en-US')}</td>
                   <td>{trade.side}</td>
                 </tr>
               ))}
@@ -135,20 +126,33 @@ useEffect(() => {
         </div>
       </div>
 
+      <div style={{ margin: '1rem 0' }}>
+        <label htmlFor="stock-select">Select Stock:</label>
+        <select
+          id="stock-select"
+          value={selectedSymbol || ""}
+          onChange={(e) => setSelectedSymbol(e.target.value)}
+          style={{ marginRight: '1rem', padding: '0.3rem', minWidth: '150px' }}
+        >
+          <option value="" disabled>Select a symbol</option>
+          {Object.keys(stockInfo).map((symbol) => (
+            <option key={symbol} value={symbol}>{symbol}</option>
+          ))}
+        </select>
+      </div>
 
-      {/* التحليل الفني */}
-      {symbolToShow && stockInfo[symbolToShow] && (
+      {selectedSymbol && stockInfo[selectedSymbol] && (
         <>
-          <h3>📈 التحليل الفني لسهم {symbolToShow}</h3>
+          <h3>📈 Technical Analysis for {selectedSymbol}</h3>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginTop: '1rem' }}>
             {[
-              ["🔺 أعلى سعر 52 أسبوع", "week52High"],
-              ["🔻 أدنى سعر 52 أسبوع", "week52Low"],
-              ["📊 متوسط 50 يوم", "ma50"],
-              ["📊 متوسط 200 يوم", "ma200"],
-              ["📊 متوسط 35 يوم", "ma35"],
-              ["📊 متوسط 360 يوم", "ma360"],
-              ["💲 السعر الحالي", "currentPrice"]
+              ["52 Week High", "week52High"],
+              ["52 Week Low", "week52Low"],
+              ["50 Day MA", "ma50"],
+              ["200 Day MA", "ma200"],
+              ["35 Day MA", "ma35"],
+              ["360 Day MA", "ma360"],
+              ["Current Price", "currentPrice"]
             ].map(([label, key]) => (
               <div key={key} style={{
                 background: '#f9f9f9',
@@ -159,41 +163,24 @@ useEffect(() => {
                 textAlign: 'center'
               }}>
                 <div style={{ fontSize: '0.9rem', color: '#666' }}>{label}</div>
-                <div style={{ fontWeight: 'bold', fontSize: '1.2rem' }}>{stockInfo[symbolToShow][key]}</div>
+                <div style={{ fontWeight: 'bold', fontSize: '1.2rem' }}>{stockInfo[selectedSymbol][key]}</div>
               </div>
             ))}
           </div>
         </>
       )}
 
-      {/* اختيار سهم لعرض التفاصيل */}
-      <div style={{ margin: '1rem 0' }}>
-        <label htmlFor="stock-select">اختر السهم لعرض تفاصيله:</label>
-        <select
-          id="stock-select"
-          value={selectedSymbol || ""}
-          onChange={(e) => setSelectedSymbol(e.target.value)}
-          style={{ marginRight: '1rem', padding: '0.3rem', minWidth: '150px' }}
-        >
-          <option value="" disabled>اختر رمز السهم</option>
-          {Object.keys(stockInfo).map((symbol) => (
-            <option key={symbol} value={symbol}>{symbol}</option>
-          ))}
-        </select>
-      </div>
-      {/* الشارت */}
-      {symbolToShow && (
-        <TradingViewChart symbol={symbolToShow} />
-      )}
+      {selectedSymbol && <TradingViewChartNew symbol={selectedSymbol} />}
 
-      {/* التوصيات */}
       <div style={{ marginTop: '2rem' }}>
-        <h3>📈 الأسهم المرشحة للصعود</h3>
-        <div>{ups.length > 0 ? ups.join(", ") : "لا يوجد حالياً"}</div>
+        <h3>📈 Recommended Stocks to Buy</h3>
+        <div>{ups.length > 0 ? ups.join(", ") : "None currently"}</div>
 
-        <h3 style={{ marginTop: '1rem' }}>📉 الأسهم المرشحة للهبوط</h3>
-        <div>{downs.length > 0 ? downs.join(", ") : "لا يوجد حالياً"}</div>
+        <h3 style={{ marginTop: '1rem' }}>📉 Recommended Stocks to Sell</h3>
+        <div>{downs.length > 0 ? downs.join(", ") : "None currently"}</div>
       </div>
     </div>
   );
 }
+
+export default BigTradesTrackerNew;
