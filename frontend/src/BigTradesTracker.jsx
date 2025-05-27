@@ -145,7 +145,7 @@ useEffect(() => {
         >
           <option value="" disabled>اختر رمز السهم</option>
           {Object.keys(stockInfo).map((symbol) => (
-            <option key={symbol} value={symbol}>{symbol}</option>
+            <option key={symbol} value={symbol}>{TSLA}</option>
           ))}
         </select>
       </div>
