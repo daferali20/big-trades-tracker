@@ -71,7 +71,7 @@ function BigTradesTracker() {
   };
 
   const { ups, downs } = getRecommendations();
-  const symbolToShow = selectedSymbol || (trades.length > 0 ? selectedSymbol : null);
+  const symbolToShow = selectedSymbol || (trades.length > 0 ? trades[0].symbol : null);
 
   return (
     <div className="big-trades-container">
@@ -137,7 +137,7 @@ function BigTradesTracker() {
           onChange={(e) => setSelectedSymbol(e.target.value)}
           style={{ marginRight: '1rem', padding: '0.3rem', minWidth: '150px' }}
         >
-          <option value="" disabled>TSLA</option>
+          <option value="" disabled>اختر رمز السهم</option>
           {Object.keys(stockInfo).map((symbol) => (
             <option key={symbol} value={symbol}>{symbol}</option>
           ))}
