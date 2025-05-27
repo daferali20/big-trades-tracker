@@ -6,7 +6,7 @@ function BigTradesTracker() {
   const [trades, setTrades] = useState([]);
   const [stockInfo, setStockInfo] = useState({});
   const [useMock, setUseMock] = useState(false);
-  const [selectedSymbol, setSelectedSymbol] = useState(aapl);
+  const [selectedSymbol, setSelectedSymbol] = useState(NULL);
 
   useEffect(() => {
     const socket = new WebSocket("ws://localhost:8000/ws/mock-trades");
