@@ -60,6 +60,12 @@ function BigTradesTracker() {
     }, 2000);
     return () => clearInterval(interval);
   }, [useMock]);
+useEffect(() => {
+  if (!selectedSymbol && Object.keys(stockInfo).length > 0) {
+    const firstSymbol = Object.keys(stockInfo)[0];
+    setSelectedSymbol(firstSymbol);
+  }
+}, [stockInfo, selectedSymbol]);
 
   const getRecommendations = () => {
     const ups = [], downs = [];
