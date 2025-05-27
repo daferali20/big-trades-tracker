@@ -6,9 +6,21 @@ function BigTradesTracker() {
   const [trades, setTrades] = useState([]);
   const [stockInfo, setStockInfo] = useState({});
   const [useMock, setUseMock] = useState(false);
-  const [selectedSymbol, setSelectedSymbol] = useState(null);
+  const [selectedSymbol, setSelectedSymbol] = useState('TSLA'); // تغيير هنا لجعل TSLA افتراضي
 
   useEffect(() => {
+    // جلب بيانات TSLA أولاً عند التحميل
+    const loadInitialStock = async () => {
+      try {
+        const res = await fetch(`http://localhost:8000/stock-info/TSLA`);
+        const info = await res.json();
+        setStockInfo(prev => ({ ...prev, TSLA: info }));
+      } catch (err) {
+        console.error("فشل جلب بيانات السهم:", err);
+      }
+    };
+    loadInitialStock();
+
     const socket = new WebSocket("ws://localhost:8000/ws/mock-trades");
     const timeout = setTimeout(() => {
       setUseMock(true);
@@ -73,6 +85,7 @@ function BigTradesTracker() {
   const { ups, downs } = getRecommendations();
   const symbolToShow = selectedSymbol || (trades.length > 0 ? trades[0].symbol : null);
 
+
   return (
     <div className="big-trades-container">
       <h2 style={{ textAlign: 'center' }}>
@@ -88,7 +101,7 @@ function BigTradesTracker() {
               <li
                 key={symbol}
                 onClick={() => setSelectedSymbol(symbol)}
-                className={symbol === symbolToShow ? 'active-symbol' : ''}
+                className={symbol === selectedSymbol ? 'active-symbol' : ''} // تغيير هنا لاستخدام selectedSymbol مباشرة
               >
                 {symbol}
               </li>
@@ -128,27 +141,26 @@ function BigTradesTracker() {
         </div>
       </div>
 
-      {/* اختيار سهم لعرض التفاصيل */}
-      <div style={{ margin: '1rem 0' }}>
-        <label htmlFor="stock-select">اختر السهم لعرض تفاصيله:</label>
-        <select
-          id="stock-select"
-          value={selectedSymbol || ""}
-          onChange={(e) => setSelectedSymbol(e.target.value)}
-          style={{ marginRight: '1rem', padding: '0.3rem', minWidth: '150px' }}
-        >
-          <option value="" disabled>اختار الرمز</option>
-          {Object.keys(stockInfo).map((symbol) => (
-            <option key={symbol} value={symbol}>{symbol}</option>
-          ))}
-        </select>
-      </div>
+        {/* اختيار سهم لعرض التفاصيل */}
+        <div style={{ margin: '1rem 0' }}>
+          <label htmlFor="stock-select">اختر السهم لعرض تفاصيله:</label>
+          <select
+            id="stock-select"
+            value={selectedSymbol} // تغيير هنا لإظهار القيمة المحددة
+            onChange={(e) => setSelectedSymbol(e.target.value)}
+            style={{ marginRight: '1rem', padding: '0.3rem', minWidth: '150px' }}
+          >
+            {Object.keys(stockInfo).map((symbol) => (
+              <option key={symbol} value={symbol}>{symbol}</option>
+            ))}
+          </select>
+        </div>
 
-      {/* التحليل الفني */}
-      {symbolToShow && stockInfo[symbolToShow] && (
-        <>
-          <h3>📈 التحليل الفني لسهم {symbolToShow}</h3>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginTop: '1rem' }}>
+        {/* التحليل الفني */}
+        {selectedSymbol && stockInfo[selectedSymbol] && ( // تغيير هنا لاستخدام selectedSymbol مباشرة
+          <>
+            <h3>📈 التحليل الفني لسهم {selectedSymbol}</h3>
+           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginTop: '1rem' }}>
             {[
               ["🔺 أعلى سعر 52 أسبوع", "week52High"],
               ["🔻 أدنى سعر 52 أسبوع", "week52Low"],
@@ -173,13 +185,13 @@ function BigTradesTracker() {
           </div>
         </>
       )}
+          
 
-      {/* الشارت */}
-      {symbolToShow && (
-        <TradingViewChart symbol={symbolToShow} />
-      )}
-
-      {/* التوصيات */}
+        {/* الشارت */}
+        {selectedSymbol && (
+          <TradingViewChart symbol={selectedSymbol} /> // تغيير هنا لاستخدام selectedSymbol
+        )}
+ {/* التوصيات */}
       <div style={{ marginTop: '2rem' }}>
         <h3>📈 الأسهم المرشحة للصعود</h3>
         <div>{ups.length > 0 ? ups.join(", ") : "لا يوجد حالياً"}</div>
@@ -190,5 +202,4 @@ function BigTradesTracker() {
     </div>
   );
 }
-
 export default BigTradesTracker;
