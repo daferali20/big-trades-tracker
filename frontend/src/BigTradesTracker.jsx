@@ -90,7 +90,7 @@ useEffect(() => {
         <div className="sidebar">
           <h4>🧾 قائمة الأسهم</h4>
           <ul>
-            {Object.keys(stockInfo).map(symbol => (
+            {Object.keys(stockInfo).map(TSLA => (
               <li
                 key={symbol}
                 onClick={() => setSelectedSymbol(symbol)}
