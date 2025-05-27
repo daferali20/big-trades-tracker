@@ -69,13 +69,7 @@ function BigTradesTracker() {
     }
     return { ups, downs };
   };
-// تحديد رمز افتراضي بمجرد تحميل بيانات السهم
-useEffect(() => {
-  if (!selectedSymbol && Object.keys(stockInfo).length > 0) {
-    const firstSymbol = Object.keys(stockInfo)[0];
-    setSelectedSymbol(firstSymbol);
-  }
-}, [stockInfo, selectedSymbol]);
+
   const { ups, downs } = getRecommendations();
   const symbolToShow = selectedSymbol || (trades.length > 0 ? selectedSymbol : null);
 
