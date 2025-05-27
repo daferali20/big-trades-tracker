@@ -1,5 +1,6 @@
 from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 import asyncio
 import json
 import websockets
@@ -7,59 +8,53 @@ import os
 
 app = FastAPI()
 
-# CORS
+# إعداد CORS للسماح بالوصول من أي واجهة أمامية
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # يمكنك تخصيصه لاحقًا لمجال موقعك فقط
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# نقطة رئيسية (للتأكد أن الخادم يعمل)
+# مسار ترحيبي بدل 404
 @app.get("/")
-def root():
+async def root():
     return {"message": "✅ WebSocket server for big trades is running. Connect to /ws/trades"}
 
-API_KEY = os.getenv("API_KEY", "WT3I1S4AXdekRj1qHZDD9TyD8Fx5tQjC")  # مفتاح افتراضي للاختبار
-SYMBOLS = ["AAPL", "MSFT", "GOOG", "TSLA", "AMZN"]  # أسهم مؤثرة
+# تقديم ملفات React المبنية (بعد تنفيذ npm run build)
+app.mount("/", StaticFiles(directory="../frontend/build", html=True), name="frontend")
 
+# إعدادات WebSocket
+API_KEY = os.getenv("POLYGON_API_KEY", "WT3I1S4AXdekRj1qHZDD9TyD8Fx5tQjC")  # مفتاح API
+SYMBOL = "AAPL"  # يمكنك تغييره أو جعله متغير ديناميكي
+
+# الاتصال بـ Polygon.io عبر WebSocket وإعادة بث الصفقات للعملاء
 async def polygon_trade_stream(websocket: WebSocket):
     uri = "wss://socket.polygon.io/stocks"
     async with websockets.connect(uri) as polygon_ws:
         await polygon_ws.send(json.dumps({"action": "auth", "params": API_KEY}))
-        await polygon_ws.send(json.dumps({
-    "action": "subscribe",
-    "params": ",".join([f"T.{symbol}" for symbol in SYMBOLS])
-}))
-
-        MIN_VALUE = 0  # ← أقل قيمة صفقة (10 دولار مثلاً)
+        await polygon_ws.send(json.dumps({"action": "subscribe", "params": f"T.{SYMBOL}"}))
 
         while True:
             message = await polygon_ws.recv()
             data = json.loads(message)
             if isinstance(data, list) and len(data) > 0 and data[0]["ev"] == "T":
-                price = data[0].get("p", 0)
-                volume = data[0].get("s", 0)
-                value = price * volume
+                trade = {
+                    "symbol": data[0].get("sym", ""),
+                    "price": data[0].get("p", 0),
+                    "volume": data[0].get("s", 0),
+                    "timestamp": data[0].get("t", ""),
+                    "side": "Buy/Sell"  # مبدئيًا، تحتاج تحليل فعلي لتحديده
+                }
+                await websocket.send_json(trade)
 
-                if value >= MIN_VALUE:
-                    trade = {
-                        "symbol": data[0].get("sym", ""),
-                        "price": price,
-                        "volume": volume,
-                        "timestamp": data[0].get("t", ""),
-                        "side": "Buy/Sell"
-                    }
-                    await websocket.send_json(trade)
-
-
+# WebSocket endpoint
 @app.websocket("/ws/trades")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     try:
         await polygon_trade_stream(websocket)
     except Exception as e:
-        print("❌ WebSocket Error:", e)
+        print(f"WebSocket connection closed: {e}")
         await websocket.close()
-
