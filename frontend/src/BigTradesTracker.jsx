@@ -146,7 +146,7 @@ useEffect(() => {
           style={{ marginRight: '1rem', padding: '0.3rem', minWidth: '150px' }}
         >
           <option value="" disabled>اختر رمز السهم</option>
-          {Object.keys(stockInfo).map((symbol) => (
+          {Object.keys(stockInfo).map((TSLA) => (
             <option key={symbol} value={symbol}>{symbol}</option>
           ))}
         </select>
