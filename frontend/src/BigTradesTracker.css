@@ -1,141 +1,106 @@
-.big-trades-container {
-  max-width: 1200px;
-  margin: auto;
-  padding: 2rem;
-  font-family: 'Segoe UI', sans-serif;
-  background: #f1f3f6;
-  border-radius: 20px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+/* index.css */
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f5f6fa;
+  margin: 0;
+  padding: 0;
+  direction: rtl;
 }
 
-/* القائمة الجانبية */
-.sidebar {
-  width: 200px;
-  background: white;
-  border-radius: 15px;
-  padding: 1rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+h1, h2, h3, h4 {
+  color: #2c3e50;
 }
 
-.sidebar ul {
+ul {
   list-style: none;
   padding: 0;
+  margin: 0;
 }
 
-.sidebar li {
-  padding: 10px;
-  margin-bottom: 5px;
-  background-color: #f5f5f5;
-  border-radius: 10px;
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+button {
   cursor: pointer;
-  text-align: center;
-  transition: all 0.3s ease;
 }
 
-.sidebar li:hover {
-  background-color: #d0e7ff;
+.sidebar {
+  width: 200px;
+  background: #fff;
+  padding: 1rem;
+  border-radius: 12px;
+  box-shadow: 0 0 5px rgba(0,0,0,0.1);
+  height: fit-content;
 }
 
-.sidebar .active-symbol {
-  background-color: #007bff;
+.sidebar ul li {
+  padding: 0.5rem;
+  margin-bottom: 0.3rem;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.sidebar ul li:hover {
+  background: #ecf0f1;
+}
+
+.sidebar ul li.active-symbol {
+  background: #2980b9;
   color: white;
   font-weight: bold;
 }
 
-/* الجدول */
 .table-container {
   flex-grow: 1;
   overflow-x: auto;
-  background: white;
-  border-radius: 15px;
-  box-shadow: 0 6px 15px rgba(0,0,0,0.1);
-  padding: 1rem;
 }
 
 .trades-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.95rem;
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 
-.trades-table th, .trades-table td {
-  padding: 10px;
+.trades-table th,
+.trades-table td {
+  padding: 0.75rem 1rem;
   text-align: center;
   border-bottom: 1px solid #eee;
 }
 
 .trades-table th {
-  background-color: #f9f9f9;
-  color: #444;
-}
-
-.trade-buy {
-  background-color: #e6ffe6;
-}
-
-.trade-sell {
-  background-color: #ffe6e6;
-}
-
-.trade-buy td,
-.trade-sell td {
+  background-color: #ecf0f1;
   font-weight: bold;
+  color: #2c3e50;
 }
 
-/* شارت وتحليل فني */
-.card-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
+.trades-table tr.trade-buy {
+  background-color: #e8f8f5;
 }
 
-.card {
-  background: #2c1212;
-  border-radius: 12px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
-  padding: 1rem;
-  text-align: center;
-  min-width: 150px;
-  flex: 1;
+.trades-table tr.trade-sell {
+  background-color: #fdecea;
 }
 
-.card-label {
-  font-size: 0.9rem;
-  color: #888;
+.trades-table tr:hover {
+  background-color: #f0f3f4;
 }
 
-.card-value {
-  font-size: 1.3rem;
-  font-weight: bold;
-  margin-top: 0.3rem;
-}
-
-/* تحديد السهم */
-#stock-select {
+select {
+  padding: 0.5rem;
   border-radius: 8px;
-  border: 1px solid #c55959;
-  padding: 6px 12px;
+  border: 1px solid #ccc;
 }
 
-/* توصيات */
-h3 {
-  margin-top: 2rem;
-  color: #333;
+input[type="text"] {
+  padding: 0.5rem;
+  border-radius: 8px;
+  border: 1px solid #ccc;
 }
-/* توزيع العناصر بشكل أفقي */
-.content-layout {
-  display: flex;
-  gap: 1.5rem;
-  margin-top: 1.5rem;
-  align-items: flex-start;
-  flex-wrap: wrap; /* حتى لا تنكسر العناصر على الشاشات الصغيرة */
-}
-.layout-row {
-  display: flex;
-  flex-direction: row;
-  gap: 1.5rem;
-  margin-top: 1.5rem;
-  align-items: flex-start;
-  flex-wrap: nowrap; /* نمنع الانكسار التلقائي */
-}
-
