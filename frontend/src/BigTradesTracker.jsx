@@ -1,46 +1,43 @@
+// BigTradesTracker.jsx
 import React, { useEffect, useState } from 'react';
 
-function BigTradesTracker() {
+export default function BigTradesTracker() {
   const [trades, setTrades] = useState([]);
 
   useEffect(() => {
-    const ws = new WebSocket('ws://localhost:8000/ws/trades');
+  const socket = new WebSocket("wss://big-trades-backend.onrender.com/ws/trades");
 
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      setTrades((prev) => [data, ...prev.slice(0, 19)]); // keep latest 20
-    };
+  socket.onmessage = function(event) {
+    const trade = JSON.parse(event.data);
+    console.log("New trade:", trade);
+    setTrades(prev => [trade, ...prev.slice(0, 19)]); // عرض آخر 20 صفقة
+  };
 
-    return () => ws.close();
-  }, []);
+  socket.onerror = (error) => {
+    console.error('WebSocket error:', error);
+  };
+
+  return () => socket.close();
+}, []);
 
   return (
-    <div>
-      <h2>صفقات كبيرة لحظية</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>السهم</th>
-            <th>السعر</th>
-            <th>الحجم</th>
-            <th>الوقت</th>
-            <th>الاتجاه</th>
-          </tr>
-        </thead>
-        <tbody>
-          {trades.map((trade, index) => (
-            <tr key={index}>
-              <td>{trade.symbol}</td>
-              <td>{trade.price}</td>
-              <td>{trade.volume}</td>
-              <td>{new Date(trade.timestamp).toLocaleTimeString()}</td>
-              <td>{trade.side}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div className="p-6 bg-gray-100 min-h-screen">
+      <h1 className="text-3xl font-bold mb-4">📈 الصفقات الكبيرة للأسهم المؤثرة</h1>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {trades.map((trade, index) => (
+          <div key={index} className="bg-white p-4 rounded-2xl shadow-md border-l-8"
+               style={{ borderColor: trade.side === 'buy' ? '#22c55e' : '#ef4444' }}>
+            <div className="text-xl font-semibold">{trade.symbol}</div>
+            <div className="text-gray-600">💰 السعر: ${trade.price.toFixed(2)}</div>
+            <div className="text-gray-600">📦 الحجم: {trade.volume.toLocaleString()}</div>
+            <div className="text-gray-600">🔄 القيمة: ${(trade.price * trade.volume).toLocaleString()} $</div>
+            <div className="text-sm text-gray-400 mt-1">⏱️ {new Date(trade.timestamp).toLocaleTimeString()}</div>
+            <div className={`mt-2 px-2 inline-block rounded text-white ${trade.side === 'buy' ? 'bg-green-500' : 'bg-red-500'}`}>
+              {trade.side === 'buy' ? 'شراء قوي' : 'بيع قوي'}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
-
-export default BigTradesTracker;
