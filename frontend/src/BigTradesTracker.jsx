@@ -9,7 +9,7 @@ function BigTradesTracker() {
   const [selectedSymbol, setSelectedSymbol] = useState(null);
 
   useEffect(() => {
-    const socket = new WebSocket("ws://localhost:8000/ws/mock-trades");
+    const socket = new WebSocket("wss://big-trades-tracker.onrender.com/ws/trades");
     const timeout = setTimeout(() => {
       setUseMock(true);
       socket.close();
