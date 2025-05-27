@@ -16,42 +16,27 @@ app.add_middleware(
 )
 
 import os
-API_KEY = os.getenv("API_KEY", "WT3I1S4AXdekRj1qHZDD9TyD8Fx5tQjC")
-  # ← ضع مفتاح API من polygon.io
-SYMBOLS = ["AAPL", "MSFT", "GOOG", "TSLA", "AMZN"]  # أسهم مؤثرة
+API_KEY = os.getenv("API_KEY")  # ← ضع مفتاح API من polygon.io
+SYMBOL = "AAPL"  # ← يمكنك تغييره لأي سهم
+
 async def polygon_trade_stream(websocket: WebSocket):
     uri = "wss://socket.polygon.io/stocks"
     async with websockets.connect(uri) as polygon_ws:
         await polygon_ws.send(json.dumps({"action": "auth", "params": API_KEY}))
-      await polygon_ws.send(json.dumps({
-    "action": "subscribe",
-    "params": ",".join([f"T.{symbol}" for symbol in SYMBOLS])
-}))
-        MIN_VALUE = 100 # ← أقل قيمة صفقة (10 دولار مثلاً)
+        await polygon_ws.send(json.dumps({"action": "subscribe", "params": f"T.{SYMBOL}"}))
 
         while True:
             message = await polygon_ws.recv()
             data = json.loads(message)
-            if isinstance(data, list):
-    for item in data:
-        if item["ev"] == "T":  # "T" تعني trade
-            price = item.get("p", 0)
-            volume = item.get("s", 0)
-            value = price * volume
-
-            if value >= MIN_VALUE:
+            if isinstance(data, list) and len(data) > 0 and data[0]["ev"] == "T":
                 trade = {
-                    "symbol": item.get("sym", ""),
-                    "price": price,
-                    "volume": volume,
-                    "timestamp": item.get("t", ""),
-                    "side": "Buy" if item.get("c", [""])[0] == "B" else "Sell"
+                    "symbol": data[0].get("sym", ""),
+                    "price": data[0].get("p", 0),
+                    "volume": data[0].get("s", 0),
+                    "timestamp": data[0].get("t", ""),
+                    "side": "Buy/Sell"
                 }
                 await websocket.send_json(trade)
-
-@app.get("/")
-def read_root():
-    return {"message": "✅ WebSocket server is running. Connect to /ws/trades"}
 
 @app.websocket("/ws/trades")
 async def websocket_endpoint(websocket: WebSocket):
