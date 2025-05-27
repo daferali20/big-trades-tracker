@@ -79,7 +79,7 @@ useEffect(() => {
   };
 
   const { ups, downs } = getRecommendations();
-  const symbolToShow = selectedSymbol || (trades.length > 0 ? trades[0].symbol : null);
+  const symbolToShow = selectedSymbol || (trades.length > 0 ? selectedSymbol : null);
 
   return (
     <div className="big-trades-container">
