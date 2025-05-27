@@ -66,6 +66,13 @@ useEffect(() => {
     setSelectedSymbol(firstSymbol);
   }
 }, [stockInfo, selectedSymbol]);
+// تحديد رمز افتراضي بمجرد تحميل بيانات السهم
+useEffect(() => {
+  if (!selectedSymbol && Object.keys(stockInfo).length > 0) {
+    const firstSymbol = Object.keys(stockInfo)[0];
+    setSelectedSymbol(firstSymbol);
+  }
+}, [stockInfo, selectedSymbol]);
 
   const getRecommendations = () => {
     const ups = [], downs = [];
