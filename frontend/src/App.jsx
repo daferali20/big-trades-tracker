@@ -1,9 +1,10 @@
 import React from 'react';
-import BigTradesTracker from './components/BigTradesTracker';
+import BigTradesTracker from './BigTradesTracker';
 
 function App() {
   return (
-    <div className="App">
+    <div>
+      <h1>Big Trades Tracker</h1>
       <BigTradesTracker />
     </div>
   );
