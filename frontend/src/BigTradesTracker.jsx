@@ -6,11 +6,11 @@ function BigTradesTracker() {
   const [trades, setTrades] = useState([]);
   const [stockInfo, setStockInfo] = useState({});
   const [useMock, setUseMock] = useState(false);
-  const [selectedSymbol, setSelectedSymbol] = useState('TSLA'); // تغيير هنا لجعل TSLA افتراضي
- const [loading, setLoading] = useState(false);
+  const [selectedSymbol, setSelectedSymbol] = useState('TSLA');
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  
- // دالة لجلب بيانات السهم من Polygon.io
+
+  // دالة لجلب بيانات السهم من Polygon.io
   const fetchStockDataFromPolygon = async (symbol) => {
     setLoading(true);
     setError(null);
@@ -50,8 +50,7 @@ function BigTradesTracker() {
       setLoading(false);
     }
   };
-  
-useEffect(() => {
+ useEffect(() => {
     // جلب بيانات TSLA أولاً عند التحميل
     const loadInitialStock = async () => {
       const tslaData = await fetchStockDataFromPolygon('TSLA');
@@ -60,14 +59,22 @@ useEffect(() => {
       }
     };
     loadInitialStock();
-    socket.onerror = (err) => console.error("WebSocket Error:", err);
-    socket.onclose = () => console.log("❌ WebSocket مغلق");
 
-    return () => {
-      clearTimeout(timeout);
-      socket.close();
-    };
-  }, [stockInfo]);
+    // ... (بقية كود useEffect الأصلي)
+  }, []);
+
+  // تعديل دالة جلب البيانات عند اختيار سهم جديد
+  useEffect(() => {
+    if (selectedSymbol && !stockInfo[selectedSymbol]) {
+      const loadStockData = async () => {
+        const stockData = await fetchStockDataFromPolygon(selectedSymbol);
+        if (stockData) {
+          setStockInfo(prev => ({ ...prev, [selectedSymbol]: stockData }));
+        }
+      };
+      loadStockData();
+    }
+  }, [selectedSymbol]);
 
   useEffect(() => {
     if (!useMock) return;
