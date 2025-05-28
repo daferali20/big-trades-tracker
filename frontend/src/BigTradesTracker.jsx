@@ -65,7 +65,7 @@ function BigTradesTracker() {
     loadInitialData();
 
     // تكوين اتصال WebSocket للصفقات الحية
-    const socket = new WebSocket("ws://localhost:8000/ws/trades");
+    const socket = new WebSocket("wss://delayed.polygon.io/stocks");
     
     socket.onmessage = async (event) => {
       const data = JSON.parse(event.data);
