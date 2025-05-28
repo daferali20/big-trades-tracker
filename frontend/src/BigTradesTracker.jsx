@@ -6,75 +6,93 @@ function BigTradesTracker() {
   const [trades, setTrades] = useState([]);
   const [stockInfo, setStockInfo] = useState({});
   const [useMock, setUseMock] = useState(false);
-  const [selectedSymbol, setSelectedSymbol] = useState('TSLA');
+  const [selectedSymbol, setSelectedSymbol] = useState('TSLA'); // تغيير هنا لجعل TSLA افتراضي
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // دالة لجلب بيانات السهم من Polygon.io
-  const fetchStockDataFromPolygon = async (symbol) => {
-    setLoading(true);
-    setError(null);
+  // دالة مساعدة لجلب بيانات السهم من Polygon.io
+  const fetchStockInfo = async (symbol) => {
     try {
-      const response = await fetch(
+      setLoading(true);
+      setError(null);
+      
+      // جلب البيانات الأساسية
+      const tickerResponse = await fetch(
         `https://api.polygon.io/v3/reference/tickers/${symbol}?apiKey=${process.env.REACT_APP_POLYGON_API_KEY}`
       );
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch stock data');
-      }
-      
-      const data = await response.json();
-      
-      // جلب البيانات الفنية الإضافية
-      const technicalResponse = await fetch(
-        `https://api.polygon.io/v1/indicators/sma/${symbol}?timespan=day&adjusted=true&window=50&series_type=close&apiKey=${process.env.REACT_APP_POLYGON_API_KEY}`
+      const tickerData = await tickerResponse.json();
+
+      // جلب البيانات الفنية (المتوسطات المتحركة)
+      const ma50Response = await fetch(
+        `https://api.polygon.io/v1/indicators/sma/${symbol}?timespan=day&window=50&apiKey=${process.env.REACT_APP_POLYGON_API_KEY}`
       );
-      
-      const technicalData = await technicalResponse.json();
-      
+      const ma50Data = await ma50Response.json();
+
+      const ma200Response = await fetch(
+        `https://api.polygon.io/v1/indicators/sma/${symbol}?timespan=day&window=200&apiKey=${process.env.REACT_APP_POLYGON_API_KEY}`
+      );
+      const ma200Data = await ma200Response.json();
+
       return {
-        symbol: data.results.ticker,
-        name: data.results.name,
-        currentPrice: data.results.lastSale?.price || 0,
-        week52High: data.results.week52High,
-        week52Low: data.results.week52Low,
-        ma50: technicalData.results.values[0]?.value || 0,
-        ma200: technicalData.results.values[0]?.value || 0,
-        // يمكنك إضافة المزيد من البيانات حسب احتياجاتك
+        symbol: symbol,
+        name: tickerData.results?.name || '',
+        currentPrice: tickerData.results?.lastSale?.price || 0,
+        week52High: tickerData.results?.week52High || 0,
+        week52Low: tickerData.results?.week52Low || 0,
+        ma50: ma50Data.results?.values[0]?.value || 0,
+        ma200: ma200Data.results?.values[0]?.value || 0,
+        ma35: 0, // يمكن استبدالها بطلب حقيقي إذا كان متاحاً
+        ma360: 0  // يمكن استبدالها بطلب حقيقي إذا كان متاحاً
       };
     } catch (err) {
-      console.error("Error fetching from Polygon.io:", err);
+      console.error("Error fetching stock info:", err);
       setError("فشل في جلب بيانات السهم. يرجى المحاولة لاحقاً.");
       return null;
     } finally {
       setLoading(false);
     }
   };
- useEffect(() => {
-    // جلب بيانات TSLA أولاً عند التحميل
-    const loadInitialStock = async () => {
-      const tslaData = await fetchStockDataFromPolygon('TSLA');
+
+  useEffect(() => {
+    // جلب بيانات TSLA الافتراضية عند التحميل
+    const loadInitialData = async () => {
+      const tslaData = await fetchStockInfo('TSLA');
       if (tslaData) {
         setStockInfo(prev => ({ ...prev, TSLA: tslaData }));
       }
     };
-    loadInitialStock();
+    loadInitialData();
 
-    // ... (بقية كود useEffect الأصلي)
-  }, []);
+    const socket = new WebSocket("ws://localhost:8000/ws/mock-trades");
+    const timeout = setTimeout(() => {
+      setUseMock(true);
+      socket.close();
+    }, 7000);
 
-  // تعديل دالة جلب البيانات عند اختيار سهم جديد
-  useEffect(() => {
-    if (selectedSymbol && !stockInfo[selectedSymbol]) {
-      const loadStockData = async () => {
-        const stockData = await fetchStockDataFromPolygon(selectedSymbol);
-        if (stockData) {
-          setStockInfo(prev => ({ ...prev, [selectedSymbol]: stockData }));
+    socket.onmessage = async (event) => {
+      clearTimeout(timeout);
+      const data = JSON.parse(event.data);
+
+      if (data.price * data.volume >= 500) {
+        setTrades(prev => [data, ...prev.slice(0, 49)]);
+
+        if (!stockInfo[data.symbol]) {
+          const newStockData = await fetchStockInfo(data.symbol);
+          if (newStockData) {
+            setStockInfo(prev => ({ ...prev, [data.symbol]: newStockData }));
+          }
         }
-      };
-      loadStockData();
-    }
-  }, [selectedSymbol]);
+      }
+    };
+
+    socket.onerror = (err) => console.error("WebSocket Error:", err);
+    socket.onclose = () => console.log("❌ WebSocket مغلق");
+
+    return () => {
+      clearTimeout(timeout);
+      socket.close();
+    };
+  }, []);
 
   useEffect(() => {
     if (!useMock) return;
@@ -108,6 +126,9 @@ function BigTradesTracker() {
 
   return (
     <div className="big-trades-container">
+      {loading && <div className="loading-indicator">جاري تحميل البيانات...</div>}
+      {error && <div className="error-message">{error}</div>}
+
       <h2 style={{ textAlign: 'center' }}>
         📊 {useMock ? "صفقات وهمية كبيرة (Mock)" : "الصفقات الكبيرة للأسهم"}
       </h2>
@@ -121,7 +142,7 @@ function BigTradesTracker() {
               <li
                 key={symbol}
                 onClick={() => setSelectedSymbol(symbol)}
-                className={symbol === selectedSymbol ? 'active-symbol' : ''} // تغيير هنا لاستخدام selectedSymbol مباشرة
+                className={symbol === symbolToShow ? 'active-symbol' : ''}
               >
                 {symbol}
               </li>
@@ -161,26 +182,26 @@ function BigTradesTracker() {
         </div>
       </div>
 
-        {/* اختيار سهم لعرض التفاصيل */}
-        <div style={{ margin: '1rem 0' }}>
-          <label htmlFor="stock-select">اختر السهم لعرض تفاصيله:</label>
-          <select
-            id="stock-select"
-            value={selectedSymbol} // تغيير هنا لإظهار القيمة المحددة
-            onChange={(e) => setSelectedSymbol(e.target.value)}
-            style={{ marginRight: '1rem', padding: '0.3rem', minWidth: '150px' }}
-          >
-            {Object.keys(stockInfo).map((symbol) => (
-              <option key={symbol} value={symbol}>{symbol}</option>
-            ))}
-          </select>
-        </div>
+      {/* اختيار سهم لعرض التفاصيل */}
+      <div style={{ margin: '1rem 0' }}>
+        <label htmlFor="stock-select">اختر السهم لعرض تفاصيله:</label>
+        <select
+          id="stock-select"
+          value={selectedSymbol}
+          onChange={(e) => setSelectedSymbol(e.target.value)}
+          style={{ marginRight: '1rem', padding: '0.3rem', minWidth: '150px' }}
+        >
+          {Object.keys(stockInfo).map((symbol) => (
+            <option key={symbol} value={symbol}>{symbol}</option>
+          ))}
+        </select>
+      </div>
 
-        {/* التحليل الفني */}
-        {selectedSymbol && stockInfo[selectedSymbol] && ( // تغيير هنا لاستخدام selectedSymbol مباشرة
-          <>
-            <h3>📈 التحليل الفني لسهم {selectedSymbol}</h3>
-           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginTop: '1rem' }}>
+      {/* التحليل الفني */}
+      {symbolToShow && stockInfo[symbolToShow] && (
+        <>
+          <h3>📈 التحليل الفني لسهم {symbolToShow}</h3>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginTop: '1rem' }}>
             {[
               ["🔺 أعلى سعر 52 أسبوع", "week52High"],
               ["🔻 أدنى سعر 52 أسبوع", "week52Low"],
@@ -199,19 +220,21 @@ function BigTradesTracker() {
                 textAlign: 'center'
               }}>
                 <div style={{ fontSize: '0.9rem', color: '#666' }}>{label}</div>
-                <div style={{ fontWeight: 'bold', fontSize: '1.2rem' }}>{stockInfo[symbolToShow][key]}</div>
+                <div style={{ fontWeight: 'bold', fontSize: '1.2rem' }}>
+                  {stockInfo[symbolToShow][key]}
+                </div>
               </div>
             ))}
           </div>
         </>
       )}
-          
 
-        {/* الشارت */}
-        {selectedSymbol && (
-          <TradingViewChart symbol={selectedSymbol} /> // تغيير هنا لاستخدام selectedSymbol
-        )}
- {/* التوصيات */}
+      {/* الشارت */}
+      {symbolToShow && (
+        <TradingViewChart symbol={symbolToShow} />
+      )}
+
+      {/* التوصيات */}
       <div style={{ marginTop: '2rem' }}>
         <h3>📈 الأسهم المرشحة للصعود</h3>
         <div>{ups.length > 0 ? ups.join(", ") : "لا يوجد حالياً"}</div>
@@ -222,4 +245,5 @@ function BigTradesTracker() {
     </div>
   );
 }
+
 export default BigTradesTracker;
