@@ -1,0 +1,25 @@
+# بيئة بايثون (backend)
+__pycache__/
+*.py[cod]
+*.sqlite3
+.env
+*.env
+*.log
+*.xml
+# Venv
+venv/
+env/
+
+# Node (frontend)
+node_modules/
+dist/
+.build/
+.cache/
+.idea/
+# أنظمة تشغيل
+.DS_Store
+Thumbs.db
+
+# ملفات أخرى
+*.bak
+*.swp
