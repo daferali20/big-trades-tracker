@@ -15,37 +15,47 @@ function BigTradesTracker() {
       setLoading(true);
       setError(null);
       
-      // جلب البيانات الأساسية
-      const tickerResponse = await fetch(
-        `https://api.polygon.io/v3/reference/tickers/${symbol}?apiKey=${process.env.REACT_APP_POLYGON_API_KEY}`
-      );
-      const tickerData = await tickerResponse.json();
+      if (useMock) {
+        // بيانات وهمية للتنمية
+        return {
+          symbol,
+          name: symbol === 'TSLA' ? 'Tesla Inc' : 
+                symbol === 'AAPL' ? 'Apple Inc' : 
+                symbol === 'NVDA' ? 'NVIDIA Corp' : 
+                symbol === 'MSFT' ? 'Microsoft Corp' : 'Amazon.com Inc',
+          currentPrice: Math.random() * 300 + 50,
+          week52High: Math.random() * 350 + 100,
+          week52Low: Math.random() * 250 + 30,
+          ma50: Math.random() * 300 + 50,
+          ma200: Math.random() * 300 + 50,
+          ma35: Math.random() * 300 + 50,
+          ma360: Math.random() * 300 + 50
+        };
+      }
 
-      // جلب آخر صفقة
-      const lastTradeResponse = await fetch(
-        `https://api.polygon.io/v2/last/trade/${symbol}?apiKey=${process.env.REACT_APP_POLYGON_API_KEY}`
-      );
-      const lastTradeData = await lastTradeResponse.json();
+      // جلب البيانات الحقيقية من Polygon.io
+      const [tickerRes, lastTradeRes, ma50Res, ma200Res] = await Promise.all([
+        fetch(`https://api.polygon.io/v3/reference/tickers/${symbol}?apiKey=${process.env.REACT_APP_POLYGON_API_KEY}`),
+        fetch(`https://api.polygon.io/v2/last/trade/${symbol}?apiKey=${process.env.REACT_APP_POLYGON_API_KEY}`),
+        fetch(`https://api.polygon.io/v1/indicators/sma/${symbol}?timespan=day&window=50&apiKey=${process.env.REACT_APP_POLYGON_API_KEY}`),
+        fetch(`https://api.polygon.io/v1/indicators/sma/${symbol}?timespan=day&window=200&apiKey=${process.env.REACT_APP_POLYGON_API_KEY}`)
+      ]);
 
-      // جلب البيانات الفنية
-      const ma50Response = await fetch(
-        `https://api.polygon.io/v1/indicators/sma/${symbol}?timespan=day&window=50&apiKey=${process.env.REACT_APP_POLYGON_API_KEY}`
-      );
-      const ma50Data = await ma50Response.json();
-
-      const ma200Response = await fetch(
-        `https://api.polygon.io/v1/indicators/sma/${symbol}?timespan=day&window=200&apiKey=${process.env.REACT_APP_POLYGON_API_KEY}`
-      );
-      const ma200Data = await ma200Response.json();
+      const [tickerData, lastTrade, ma50, ma200] = await Promise.all([
+        tickerRes.json(),
+        lastTradeRes.json(),
+        ma50Res.json(),
+        ma200Res.json()
+      ]);
 
       return {
-        symbol: symbol,
+        symbol,
         name: tickerData.results?.name || '',
-        currentPrice: lastTradeData.results?.p || 0,
+        currentPrice: lastTrade.results?.p || 0,
         week52High: tickerData.results?.week52High || 0,
         week52Low: tickerData.results?.week52Low || 0,
-        ma50: ma50Data.results?.values[0]?.value || 0,
-        ma200: ma200Data.results?.values[0]?.value || 0,
+        ma50: ma50.results?.values[0]?.value || 0,
+        ma200: ma200.results?.values[0]?.value || 0,
         ma35: 0,
         ma360: 0
       };
@@ -67,36 +77,43 @@ function BigTradesTracker() {
     };
     loadInitialData();
 
-    const socket = new WebSocket("ws://localhost:8000/ws/mock-trades");
+    const socket = useMock ? null : new WebSocket("ws://localhost:8000/ws/trades");
     const timeout = setTimeout(() => {
+      if (!socket) return;
       setUseMock(true);
-      socket.close();
+      socket?.close();
     }, 7000);
 
-    socket.onmessage = async (event) => {
-      clearTimeout(timeout);
-      const data = JSON.parse(event.data);
+    if (socket) {
+      socket.onmessage = async (event) => {
+        clearTimeout(timeout);
+        const data = JSON.parse(event.data);
 
-      if (data.price * data.volume >= 500) {
-        setTrades(prev => [data, ...prev.slice(0, 49)]);
+        if (data.price * data.volume >= 500) {
+          setTrades(prev => [data, ...prev.slice(0, 49)]);
 
-        if (!stockInfo[data.symbol]) {
-          const newStockData = await fetchStockInfo(data.symbol);
-          if (newStockData) {
-            setStockInfo(prev => ({ ...prev, [data.symbol]: newStockData }));
+          if (!stockInfo[data.symbol]) {
+            const newStockData = await fetchStockInfo(data.symbol);
+            if (newStockData) {
+              setStockInfo(prev => ({ ...prev, [data.symbol]: newStockData }));
+            }
           }
         }
-      }
-    };
+      };
 
-    socket.onerror = (err) => console.error("WebSocket Error:", err);
-    socket.onclose = () => console.log("❌ WebSocket مغلق");
+      socket.onerror = (err) => {
+        console.error("WebSocket Error:", err);
+        setUseMock(true);
+      };
+      
+      socket.onclose = () => console.log("❌ WebSocket مغلق");
+    }
 
     return () => {
       clearTimeout(timeout);
-      socket.close();
+      socket?.close();
     };
-  }, []);
+  }, [useMock]);
 
   useEffect(() => {
     if (!useMock) return;
@@ -111,10 +128,30 @@ function BigTradesTracker() {
       };
       if (mockTrade.price * mockTrade.volume >= 10000) {
         setTrades(prev => [mockTrade, ...prev.slice(0, 49)]);
+        
+        if (!stockInfo[mockTrade.symbol]) {
+          setStockInfo(prev => ({
+            ...prev,
+            [mockTrade.symbol]: {
+              symbol: mockTrade.symbol,
+              name: mockTrade.symbol === 'TSLA' ? 'Tesla Inc' : 
+                    mockTrade.symbol === 'AAPL' ? 'Apple Inc' : 
+                    mockTrade.symbol === 'NVDA' ? 'NVIDIA Corp' : 
+                    mockTrade.symbol === 'MSFT' ? 'Microsoft Corp' : 'Amazon.com Inc',
+              currentPrice: mockTrade.price,
+              week52High: mockTrade.price * 1.3,
+              week52Low: mockTrade.price * 0.7,
+              ma50: mockTrade.price * 0.95,
+              ma200: mockTrade.price * 0.9,
+              ma35: mockTrade.price * 0.97,
+              ma360: mockTrade.price * 0.85
+            }
+          }));
+        }
       }
     }, 2000);
     return () => clearInterval(interval);
-  }, [useMock]);
+  }, [useMock, stockInfo]);
 
   const getRecommendations = () => {
     const ups = [], downs = [];
@@ -132,6 +169,21 @@ function BigTradesTracker() {
     <div className="big-trades-container">
       {loading && <div className="loading-indicator">جاري تحميل البيانات...</div>}
       {error && <div className="error-message">{error}</div>}
+
+      <div style={{
+        position: 'fixed',
+        top: '10px',
+        right: '10px',
+        zIndex: 1000,
+        padding: '5px 10px',
+        background: useMock ? '#ff4757' : '#2ed573',
+        color: 'white',
+        border: 'none',
+        borderRadius: '5px',
+        cursor: 'pointer'
+      }} onClick={() => setUseMock(!useMock)}>
+        {useMock ? 'الوضع الوهمي ⚠️' : 'الوضع الحقيقي ✅'}
+      </div>
 
       <h2 style={{ textAlign: 'center' }}>
         📊 {useMock ? "صفقات وهمية كبيرة (Mock)" : "الصفقات الكبيرة للأسهم"}
@@ -172,7 +224,7 @@ function BigTradesTracker() {
                   key={index}
                 >
                   <td>{trade.symbol}</td>
-                  <td>{trade.price}</td>
+                  <td>{trade.price.toFixed(2)}</td>
                   <td>{trade.volume}</td>
                   <td>{(trade.price * trade.volume).toLocaleString()}</td>
                   <td>{new Date(trade.timestamp).toLocaleTimeString('ar-EG')}</td>
