@@ -3,37 +3,20 @@ import React, { useEffect, useState } from 'react';
 import TradingViewChart from './TradingViewChart';
 
 function BigTradesTracker() {
-  const [trades, setTrades] = useState([]);
-  const [stockInfo, setStockInfo] = useState({});
-  const [useMock, setUseMock] = useState(false);
-  const [selectedSymbol, setSelectedSymbol] = useState('TSLA');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  // 1. تعريف الحالات (States)
+  const [trades, setTrades] = useState([]); // تخزين الصفقات
+  const [stockInfo, setStockInfo] = useState({}); // معلومات الأسهم
+  const [selectedSymbol, setSelectedSymbol] = useState('TSLA'); // السهم المحدد
+  const [loading, setLoading] = useState(false); // حالة التحميل
+  const [error, setError] = useState(null); // الأخطاء
 
+  // 2. دالة جلب بيانات السهم من Polygon.io
   const fetchStockInfo = async (symbol) => {
     try {
       setLoading(true);
       setError(null);
       
-      if (useMock) {
-        // بيانات وهمية للتنمية
-        return {
-          symbol,
-          name: symbol === 'TSLA' ? 'Tesla Inc' : 
-                symbol === 'AAPL' ? 'Apple Inc' : 
-                symbol === 'NVDA' ? 'NVIDIA Corp' : 
-                symbol === 'MSFT' ? 'Microsoft Corp' : 'Amazon.com Inc',
-          currentPrice: Math.random() * 300 + 50,
-          week52High: Math.random() * 350 + 100,
-          week52Low: Math.random() * 250 + 30,
-          ma50: Math.random() * 300 + 50,
-          ma200: Math.random() * 300 + 50,
-          ma35: Math.random() * 300 + 50,
-          ma360: Math.random() * 300 + 50
-        };
-      }
-
-      // جلب البيانات الحقيقية من Polygon.io
+      // جلب البيانات الأساسية من API Polygon
       const [tickerRes, lastTradeRes, ma50Res, ma200Res] = await Promise.all([
         fetch(`https://api.polygon.io/v3/reference/tickers/${symbol}?apiKey=${process.env.REACT_APP_POLYGON_API_KEY}`),
         fetch(`https://api.polygon.io/v2/last/trade/${symbol}?apiKey=${process.env.REACT_APP_POLYGON_API_KEY}`),
@@ -41,6 +24,7 @@ function BigTradesTracker() {
         fetch(`https://api.polygon.io/v1/indicators/sma/${symbol}?timespan=day&window=200&apiKey=${process.env.REACT_APP_POLYGON_API_KEY}`)
       ]);
 
+      // معالجة البيانات المستلمة
       const [tickerData, lastTrade, ma50, ma200] = await Promise.all([
         tickerRes.json(),
         lastTradeRes.json(),
@@ -48,6 +32,7 @@ function BigTradesTracker() {
         ma200Res.json()
       ]);
 
+      // إرجاع البيانات بشكل منظم
       return {
         symbol,
         name: tickerData.results?.name || '',
@@ -56,8 +41,8 @@ function BigTradesTracker() {
         week52Low: tickerData.results?.week52Low || 0,
         ma50: ma50.results?.values[0]?.value || 0,
         ma200: ma200.results?.values[0]?.value || 0,
-        ma35: 0,
-        ma360: 0
+        ma35: 0, // يمكن استبدالها بطلب حقيقي إذا كان متاحاً
+        ma360: 0  // يمكن استبدالها بطلب حقيقي إذا كان متاحاً
       };
     } catch (err) {
       console.error("Error fetching stock info:", err);
@@ -68,7 +53,9 @@ function BigTradesTracker() {
     }
   };
 
+  // 3. useEffect لجلب البيانات الأولية وتكوين اتصال WebSocket
   useEffect(() => {
+    // جلب بيانات TSLA عند التحميل الأولي
     const loadInitialData = async () => {
       const tslaData = await fetchStockInfo('TSLA');
       if (tslaData) {
@@ -77,86 +64,45 @@ function BigTradesTracker() {
     };
     loadInitialData();
 
-    const socket = useMock ? null : new WebSocket("ws://localhost:8000/ws/trades");
-    const timeout = setTimeout(() => {
-      if (!socket) return;
-      setUseMock(true);
-      socket?.close();
-    }, 7000);
+    // تكوين اتصال WebSocket للصفقات الحية
+    const socket = new WebSocket("ws://localhost:8000/ws/trades");
+    
+    socket.onmessage = async (event) => {
+      const data = JSON.parse(event.data);
 
-    if (socket) {
-      socket.onmessage = async (event) => {
-        clearTimeout(timeout);
-        const data = JSON.parse(event.data);
+      // معالجة الصفقات الكبيرة فقط (قيمة 500$ فأكثر)
+      if (data.price * data.volume >= 500) {
+        setTrades(prev => [data, ...prev.slice(0, 49)]); // تحديث قائمة الصفقات
 
-        if (data.price * data.volume >= 500) {
-          setTrades(prev => [data, ...prev.slice(0, 49)]);
-
-          if (!stockInfo[data.symbol]) {
-            const newStockData = await fetchStockInfo(data.symbol);
-            if (newStockData) {
-              setStockInfo(prev => ({ ...prev, [data.symbol]: newStockData }));
-            }
+        // جلب بيانات السهم إذا لم تكن موجودة
+        if (!stockInfo[data.symbol]) {
+          const newStockData = await fetchStockInfo(data.symbol);
+          if (newStockData) {
+            setStockInfo(prev => ({ ...prev, [data.symbol]: newStockData }));
           }
         }
-      };
+      }
+    };
 
-      socket.onerror = (err) => {
-        console.error("WebSocket Error:", err);
-        setUseMock(true);
-      };
-      
-      socket.onclose = () => console.log("❌ WebSocket مغلق");
-    }
+    socket.onerror = (err) => {
+      console.error("WebSocket Error:", err);
+      setError("فقدان الاتصال بخادم الصفقات الحية");
+    };
+    
+    socket.onclose = () => console.log("❌ تم إغلاق اتصال WebSocket");
 
     return () => {
-      clearTimeout(timeout);
-      socket?.close();
+      socket.close(); // تنظيف الاتصال عند إلغاء التثبيت
     };
-  }, [useMock]);
+  }, [ ]);
 
-  useEffect(() => {
-    if (!useMock) return;
-
-    const interval = setInterval(() => {
-      const mockTrade = {
-        symbol: ["AAPL", "TSLA", "NVDA", "MSFT", "AMZN"][Math.floor(Math.random() * 5)],
-        price: parseFloat((Math.random() * 300 + 50).toFixed(2)),
-        volume: Math.floor(Math.random() * 900 + 100),
-        timestamp: Date.now(),
-        side: Math.random() > 0.5 ? "Buy" : "Sell"
-      };
-      if (mockTrade.price * mockTrade.volume >= 10000) {
-        setTrades(prev => [mockTrade, ...prev.slice(0, 49)]);
-        
-        if (!stockInfo[mockTrade.symbol]) {
-          setStockInfo(prev => ({
-            ...prev,
-            [mockTrade.symbol]: {
-              symbol: mockTrade.symbol,
-              name: mockTrade.symbol === 'TSLA' ? 'Tesla Inc' : 
-                    mockTrade.symbol === 'AAPL' ? 'Apple Inc' : 
-                    mockTrade.symbol === 'NVDA' ? 'NVIDIA Corp' : 
-                    mockTrade.symbol === 'MSFT' ? 'Microsoft Corp' : 'Amazon.com Inc',
-              currentPrice: mockTrade.price,
-              week52High: mockTrade.price * 1.3,
-              week52Low: mockTrade.price * 0.7,
-              ma50: mockTrade.price * 0.95,
-              ma200: mockTrade.price * 0.9,
-              ma35: mockTrade.price * 0.97,
-              ma360: mockTrade.price * 0.85
-            }
-          }));
-        }
-      }
-    }, 2000);
-    return () => clearInterval(interval);
-  }, [useMock, stockInfo]);
-
+  // 4. دالة تحليل التوصيات
   const getRecommendations = () => {
     const ups = [], downs = [];
     for (const [symbol, info] of Object.entries(stockInfo)) {
+      // تحديد الأسهم الصاعدة (السعر فوق المتوسطات)
       if (info.currentPrice > info.ma50 && info.currentPrice > info.ma200) ups.push(symbol);
+      // تحديد الأسهم الهابطة (السعر تحت المتوسطات)
       if (info.currentPrice < info.ma50 && info.currentPrice < info.ma200) downs.push(symbol);
     }
     return { ups, downs };
@@ -165,31 +111,19 @@ function BigTradesTracker() {
   const { ups, downs } = getRecommendations();
   const symbolToShow = selectedSymbol || (trades.length > 0 ? trades[0].symbol : null);
 
+  // 5. واجهة المستخدم
   return (
     <div className="big-trades-container">
+      {/* مؤشر التحميل ورسائل الخطأ */}
       {loading && <div className="loading-indicator">جاري تحميل البيانات...</div>}
       {error && <div className="error-message">{error}</div>}
 
-      <div style={{
-        position: 'fixed',
-        top: '10px',
-        right: '10px',
-        zIndex: 1000,
-        padding: '5px 10px',
-        background: useMock ? '#ff4757' : '#2ed573',
-        color: 'white',
-        border: 'none',
-        borderRadius: '5px',
-        cursor: 'pointer'
-      }} onClick={() => setUseMock(!useMock)}>
-        {useMock ? 'الوضع الوهمي ⚠️' : 'الوضع الحقيقي ✅'}
-      </div>
+      {/* عنوان الصفحة */}
+      <h2 style={{ textAlign: 'center' }}>📊 الصفقات الكبيرة للأسهم</h2>
 
-      <h2 style={{ textAlign: 'center' }}>
-        📊 {useMock ? "صفقات وهمية كبيرة (Mock)" : "الصفقات الكبيرة للأسهم"}
-      </h2>
-
+      {/* القسم الرئيسي - قائمة الأسهم وجدول الصفقات */}
       <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+        {/* الشريط الجانبي - قائمة الأسهم */}
         <div className="sidebar">
           <h4>🧾 قائمة الأسهم</h4>
           <ul>
@@ -205,6 +139,7 @@ function BigTradesTracker() {
           </ul>
         </div>
 
+        {/* جدول الصفقات */}
         <div className="table-container">
           <table className="trades-table">
             <thead>
@@ -236,6 +171,7 @@ function BigTradesTracker() {
         </div>
       </div>
 
+      {/* اختيار السهم لعرض التفاصيل */}
       <div style={{ margin: '1rem 0' }}>
         <label htmlFor="stock-select">اختر السهم لعرض تفاصيله:</label>
         <select
@@ -250,6 +186,7 @@ function BigTradesTracker() {
         </select>
       </div>
 
+      {/* قسم التحليل الفني */}
       {symbolToShow && (
         <div className="technical-analysis">
           <h3>📈 التحليل الفني لسهم {symbolToShow}</h3>
@@ -319,10 +256,12 @@ function BigTradesTracker() {
         </div>
       )}
 
+      {/* مخطط TradingView */}
       {symbolToShow && (
         <TradingViewChart symbol={symbolToShow} />
       )}
 
+      {/* قسم التوصيات */}
       <div style={{ marginTop: '2rem' }}>
         <h3>📈 الأسهم المرشحة للصعود</h3>
         <div>{ups.length > 0 ? ups.join(", ") : "لا يوجد حالياً"}</div>
