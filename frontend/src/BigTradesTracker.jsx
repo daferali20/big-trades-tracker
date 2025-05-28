@@ -17,11 +17,17 @@ function BigTradesTracker() {
       setError(null);
       
       // جلب البيانات الأساسية
-      const tickerResponse = await fetch(
-        `https://api.polygon.io/v3/reference/tickers/${symbol}?apiKey=${process.env.REACT_APP_POLYGON_API_KEY}`
-      );
-      const tickerData = await tickerResponse.json();
-
+      const fetchRealTimeData = async (symbol) => {
+  try {
+    const response = await fetch(
+      `https://api.polygon.io/v2/last/trade/${symbol}?apiKey=${process.env.REACT_APP_POLYGON_API_KEY}`
+    );
+    return await response.json();
+  } catch (error) {
+    console.error("Error fetching real-time data:", error);
+    return null;
+  }
+};
       // جلب البيانات الفنية (المتوسطات المتحركة)
       const ma50Response = await fetch(
         `https://api.polygon.io/v1/indicators/sma/${symbol}?timespan=day&window=50&apiKey=${process.env.REACT_APP_POLYGON_API_KEY}`
@@ -198,36 +204,74 @@ function BigTradesTracker() {
       </div>
 
       {/* التحليل الفني */}
-      {symbolToShow && stockInfo[symbolToShow] && (
-        <>
-          <h3>📈 التحليل الفني لسهم {symbolToShow}</h3>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginTop: '1rem' }}>
-            {[
-              ["🔺 أعلى سعر 52 أسبوع", "week52High"],
-              ["🔻 أدنى سعر 52 أسبوع", "week52Low"],
-              ["📊 متوسط 50 يوم", "ma50"],
-              ["📊 متوسط 200 يوم", "ma200"],
-              ["📊 متوسط 35 يوم", "ma35"],
-              ["📊 متوسط 360 يوم", "ma360"],
-              ["💲 السعر الحالي", "currentPrice"]
-            ].map(([label, key]) => (
-              <div key={key} style={{
+{symbolToShow && (
+  <div className="technical-analysis">
+    <h3>📈 التحليل الفني لسهم {symbolToShow}</h3>
+    
+    {loading ? (
+      <div className="loading-indicator">
+        <p>جاري تحميل البيانات...</p>
+      </div>
+    ) : (
+      stockInfo[symbolToShow] && (
+        <div className="indicators-grid" style={{ 
+          display: 'flex', 
+          flexWrap: 'wrap', 
+          gap: '1rem', 
+          marginTop: '1rem'
+        }}>
+          {[
+            ["🔺 أعلى سعر 52 أسبوع", "week52High"],
+            ["🔻 أدنى سعر 52 أسبوع", "week52Low"],
+            ["📊 متوسط 50 يوم", "ma50"],
+            ["📊 متوسط 200 يوم", "ma200"],
+            ["📊 متوسط 35 يوم", "ma35"],
+            ["📊 متوسط 360 يوم", "ma360"],
+            ["💲 السعر الحالي", "currentPrice"]
+          ].map(([label, key]) => (
+            <div 
+              key={key}
+              className="indicator-card"
+              style={{
                 background: '#f9f9f9',
                 padding: '1rem',
                 borderRadius: '10px',
                 minWidth: '150px',
                 boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
-                textAlign: 'center'
+                textAlign: 'center',
+                transition: 'transform 0.2s'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.03)'}
+              onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+            >
+              <div style={{ fontSize: '0.9rem', color: '#666' }}>{label}</div>
+              <div style={{ 
+                fontWeight: 'bold', 
+                fontSize: '1.2rem',
+                color: key === 'currentPrice' ? 
+                  (stockInfo[symbolToShow][key] > stockInfo[symbolToShow]['ma50'] ? '#2ecc71' : '#e74c3c') 
+                  : 'inherit'
               }}>
-                <div style={{ fontSize: '0.9rem', color: '#666' }}>{label}</div>
-                <div style={{ fontWeight: 'bold', fontSize: '1.2rem' }}>
-                  {stockInfo[symbolToShow][key]}
-                </div>
+                {typeof stockInfo[symbolToShow][key] === 'number' ? 
+                  stockInfo[symbolToShow][key].toFixed(2) : 
+                  stockInfo[symbolToShow][key]}
               </div>
-            ))}
-          </div>
-        </>
-      )}
+            </div>
+          ))}
+        </div>
+      )
+    )}
+
+    {error && (
+      <div className="error-message" style={{
+        color: '#e74c3c',
+        marginTop: '1rem'
+      }}>
+        {error}
+      </div>
+    )}
+  </div>
+)}
 
       {/* الشارت */}
       {symbolToShow && (
