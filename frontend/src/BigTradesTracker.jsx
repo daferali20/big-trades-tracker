@@ -15,43 +15,43 @@ function BigTradesTracker() {
   const apiKey = 'd0s84hpr01qkkpltj8j0d0s84hpr01qkkpltj8jg'; // ضع مفتاح API هنا
 
   const fetchStockInfo = async (symbol) => {
-    try {
-      setLoading(true);
-      setError(null);
+  try {
+    setLoading(true);
+    setError(null);
 
-      const [profileRes, quoteRes, ma50Res, ma200Res] = await Promise.all([
+    const [profileRes, quoteRes, ma50Res, ma200Res] = await Promise.all([
       fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${symbol}&token=${apiKey}`),
       fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${apiKey}`),
       fetch(`https://finnhub.io/api/v1/indicator?symbol=${symbol}&resolution=D&indicator=sma&timeperiod=50&token=${apiKey}`),
       fetch(`https://finnhub.io/api/v1/indicator?symbol=${symbol}&resolution=D&indicator=sma&timeperiod=200&token=${apiKey}`)
+    ]);
 
-      const [tickerData, lastTrade, ma50, ma200] = await Promise.all([
-        tickerRes.json(),
-        lastTradeRes.json(),
-        ma50Res.json(),
-        ma200Res.json()
-      ]);
+    const [profile, quote, ma50, ma200] = await Promise.all([
+      profileRes.json(),
+      quoteRes.json(),
+      ma50Res.json(),
+      ma200Res.json()
+    ]);
 
-      return {
-        symbol,
-        name: tickerData.results?.name || '',
-        currentPrice: lastTrade.results?.p || 0,
-        week52High: tickerData.results?.week_52_high || 0,
-        week52Low: tickerData.results?.week_52_low || 0,
-        ma50: ma50.results?.values?.[0]?.value || 0,
-        ma200: ma200.results?.values?.[0]?.value || 0,
-        ma35: 0,
-        ma360: 0
-      };
-    } catch (err) {
-      console.error("Error fetching stock info:", err);
-      setError("فشل في جلب بيانات السهم. يرجى المحاولة لاحقاً.");
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  };
-
+    return {
+      symbol,
+      name: profile.name || symbol,
+      currentPrice: quote.c || 0,
+      week52High: quote.h || 0, // لا يتوفر مباشرة في Finnhub المجاني
+      week52Low: quote.l || 0,  // لا يتوفر مباشرة في Finnhub المجاني
+      ma50: ma50?.technicalAnalysis?.sma?.[0] || 0,
+      ma200: ma200?.technicalAnalysis?.sma?.[0] || 0,
+      ma35: 0,
+      ma360: 0
+    };
+  } catch (err) {
+    console.error("Error fetching stock info from Finnhub:", err);
+    setError("فشل في جلب بيانات السهم من Finnhub.");
+    return null;
+  } finally {
+    setLoading(false);
+  }
+};
   useEffect(() => {
     const loadInitialData = async () => {
       const tslaData = await fetchStockInfo('TSLA');
