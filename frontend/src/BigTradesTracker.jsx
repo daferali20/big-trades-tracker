@@ -93,11 +93,6 @@ function BigTradesTracker() {
     };
     
     socket.onclose = () => console.log("❌ تم إغلاق اتصال WebSocket");
-
-    return () => {
-      socket.close(); // تنظيف الاتصال عند إلغاء التثبيت
-    };
-  }, [ ]);
 //الاسهم الاكثر ارتفاعا
 const getTopGainers = () => {
   return Object.values(stockInfo)
@@ -119,6 +114,11 @@ const getTopGainers = () => {
     ))}
   </ul>
 </div>
+    return () => {
+      socket.close(); // تنظيف الاتصال عند إلغاء التثبيت
+    };
+  }, [ ]);
+
 
   // 4. دالة تحليل التوصيات
   const getRecommendations = () => {
