@@ -12,7 +12,7 @@ function BigTradesTracker() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const apiKey = 'd0s63s1r01qkkplt7130d0s63s1r01qkkplt713g'; // ضع مفتاح API هنا
+  const apiKey = 'd0s84hpr01qkkpltj8j0d0s84hpr01qkkpltj8jg'; // ضع مفتاح API هنا
 
   const fetchStockInfo = async (symbol) => {
     try {
