@@ -167,9 +167,7 @@ function BigTradesTracker() {
         </div>
       )}
 
-      {symbolToShow && (
-        <TradingViewChart symbol={symbolToShow} />
-      )}
+     
 
       <div style={{ marginTop: '2rem' }}>
         <h3>📈 الأسهم المرشحة للصعود</h3>
