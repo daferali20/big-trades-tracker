@@ -18,11 +18,11 @@ function BigTradesTracker() {
       
       // جلب البيانات الأساسية من API Polygon
       const [tickerRes, lastTradeRes, ma50Res, ma200Res] = await Promise.all([
-        fetch(`https://api.polygon.io/v3/reference/tickers/${symbol}?apiKey=${process.env.REACT_APP_POLYGON_API_KEY}`),
-        fetch(`https://api.polygon.io/v2/last/trade/${symbol}?apiKey=${process.env.REACT_APP_POLYGON_API_KEY}`),
-        fetch(`https://api.polygon.io/v1/indicators/sma/${symbol}?timespan=day&window=50&apiKey=${process.env.REACT_APP_POLYGON_API_KEY}`),
-        fetch(`https://api.polygon.io/v1/indicators/sma/${symbol}?timespan=day&window=200&apiKey=${process.env.REACT_APP_POLYGON_API_KEY}`)
-      ]);
+  fetch(`https://api.polygon.io/v3/reference/tickers/${symbol}?apiKey=${apiKey}`),
+  fetch(`https://api.polygon.io/v2/last/trade/${symbol}?apiKey=${apiKey}`),
+  fetch(`https://api.polygon.io/v1/indicators/sma/${symbol}?timespan=day&window=50&series_type=close&order=desc&limit=1&adjusted=true&apiKey=${apiKey}`),
+  fetch(`https://api.polygon.io/v1/indicators/sma/${symbol}?timespan=day&window=200&series_type=close&order=desc&limit=1&adjusted=true&apiKey=${apiKey}`)
+]);
 
       // معالجة البيانات المستلمة
       const [tickerData, lastTrade, ma50, ma200] = await Promise.all([
