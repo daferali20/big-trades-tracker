@@ -1,28 +1,34 @@
 import React from 'react';
 
-function StockCard({ label, value, highlight }) {
+function TradesTable({ trades }) {
   return (
-    <div
-      className="indicator-card"
-      style={{
-        background: '#f9f9f9',
-        padding: '1rem',
-        borderRadius: '10px',
-        minWidth: '150px',
-        boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
-        textAlign: 'center',
-        transition: 'transform 0.2s',
-        color: highlight,
-      }}
-      onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.03)'}
-      onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-    >
-      <div style={{ fontSize: '0.9rem', color: '#666' }}>{label}</div>
-      <div style={{ fontWeight: 'bold', fontSize: '1.2rem' }}>
-        {typeof value === 'number' ? value.toFixed(2) : value}
-      </div>
+    <div className="table-container">
+      <table className="trades-table">
+        <thead>
+          <tr>
+            <th>الرمز</th>
+            <th>السعر</th>
+            <th>الكمية</th>
+            <th>القيمة</th>
+            <th>الوقت</th>
+            <th>الصفقة</th>
+          </tr>
+        </thead>
+        <tbody>
+          {trades.map((trade, index) => (
+            <tr key={index} className={trade.side === "Buy" ? "trade-buy" : "trade-sell"}>
+              <td>{trade.symbol}</td>
+              <td>{trade.price.toFixed(2)}</td>
+              <td>{trade.volume}</td>
+              <td>{(trade.price * trade.volume).toLocaleString()}</td>
+              <td>{new Date(trade.timestamp).toLocaleTimeString('ar-EG')}</td>
+              <td>{trade.side}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
 
-export default StockCard;
+export default TradesTable;
