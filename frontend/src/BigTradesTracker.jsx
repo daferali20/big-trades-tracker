@@ -73,8 +73,8 @@ function BigTradesTracker() {
       const data = JSON.parse(event.data);
 
       // معالجة الصفقات الكبيرة فقط (قيمة 500$ فأكثر)
-      if (data.price * data.volume >= 500) {
-        setTrades(prev => [data, ...prev.slice(0, 49)]); // تحديث قائمة الصفقات
+      if (data.price * data.volume >= 1000) {
+         setTrades(prev => [data, ...prev.slice(0, 49)]);} // تحديث قائمة الصفقات
 
         // جلب بيانات السهم إذا لم تكن موجودة
         if (!stockInfo[data.symbol]) {
