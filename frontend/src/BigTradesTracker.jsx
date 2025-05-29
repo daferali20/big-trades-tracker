@@ -1,6 +1,8 @@
 import './BigTradesTracker.css';
 import React, { useEffect, useState } from 'react';
 import TradingViewChart from './TradingViewChart';
+import StockCard from './StockCard';
+import TradesTable from './TradesTable';
 
 function BigTradesTracker() {
   // 1. تعريف الحالات (States)
