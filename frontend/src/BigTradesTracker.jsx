@@ -12,19 +12,18 @@ function BigTradesTracker() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const apiKey = '70D7rupiLla29W4BPvlIr9UGp25_XnuQ'; // ضع مفتاح API هنا
+  const apiKey = 'd0s63s1r01qkkplt7130d0s63s1r01qkkplt713g'; // ضع مفتاح API هنا
 
   const fetchStockInfo = async (symbol) => {
     try {
       setLoading(true);
       setError(null);
 
-      const [tickerRes, lastTradeRes, ma50Res, ma200Res] = await Promise.all([
-        fetch(`https://api.polygon.io/v3/reference/tickers/${symbol}?apiKey=${apiKey}`),
-        fetch(`https://api.polygon.io/v2/last/trade/${symbol}?apiKey=${apiKey}`),
-        fetch(`https://api.polygon.io/v1/indicators/sma/${symbol}?timespan=day&window=50&series_type=close&order=desc&limit=1&adjusted=true&apiKey=${apiKey}`),
-        fetch(`https://api.polygon.io/v1/indicators/sma/${symbol}?timespan=day&window=200&series_type=close&order=desc&limit=1&adjusted=true&apiKey=${apiKey}`)
-      ]);
+      const [profileRes, quoteRes, ma50Res, ma200Res] = await Promise.all([
+      fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${symbol}&token=${apiKey}`),
+      fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${apiKey}`),
+      fetch(`https://finnhub.io/api/v1/indicator?symbol=${symbol}&resolution=D&indicator=sma&timeperiod=50&token=${apiKey}`),
+      fetch(`https://finnhub.io/api/v1/indicator?symbol=${symbol}&resolution=D&indicator=sma&timeperiod=200&token=${apiKey}`)
 
       const [tickerData, lastTrade, ma50, ma200] = await Promise.all([
         tickerRes.json(),
