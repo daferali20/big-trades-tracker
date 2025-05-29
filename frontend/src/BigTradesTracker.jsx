@@ -108,6 +108,16 @@ const getTopGainers = () => {
     .sort((a, b) => b.changePercent - a.changePercent)
     .slice(0, 5);
 };
+<div style={{ marginTop: '2rem' }}>
+  <h3>🚀 الأسهم الأكثر ارتفاعاً عن أدنى مستوى 52 أسبوع</h3>
+  <ul>
+    {getTopGainers().map(item => (
+      <li key={item.symbol}>
+        {item.symbol} - {item.changePercent.toFixed(2)}%
+      </li>
+    ))}
+  </ul>
+</div>
 
   // 4. دالة تحليل التوصيات
   const getRecommendations = () => {
