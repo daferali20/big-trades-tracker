@@ -78,11 +78,12 @@ function BigTradesTracker() {
          setTrades(prev => [data, ...prev.slice(0, 49)]);} // تحديث قائمة الصفقات
 
         // جلب بيانات السهم إذا لم تكن موجودة
-        if (!stockInfo[data.symbol]) {
-          const newStockData = await fetchStockInfo(data.symbol);
-          if (newStockData) {
+      if (!Object.keys(stockInfoRef.current).includes(data.symbol)) {
+  const newStockData = await fetchStockInfo(data.symbol);
+if (newStockData) {
             setStockInfo(prev => ({ ...prev, [data.symbol]: newStockData }));
-          }
+}
+                  }
         }
       }
     };
