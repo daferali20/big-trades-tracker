@@ -1,6 +1,5 @@
 // BigTradesTracker.jsx
 import React, { useEffect, useState } from 'react';
-import TradingViewChart from './TradingViewChart';
 import StockCard from './StockCard';
 import TradesTable from './TradesTable';
 import './BigTradesTracker.css';
