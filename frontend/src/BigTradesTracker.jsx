@@ -1,5 +1,6 @@
 // BigTradesTracker.jsx
 import React, { useEffect, useState } from 'react';
+import TradingViewChart from './TradingViewChart';
 import StockCard from './StockCard';
 import TradesTable from './TradesTable';
 import './BigTradesTracker.css';
@@ -167,7 +168,7 @@ function BigTradesTracker() {
         </div>
       )}
 
-     
+      {symbolToShow && ( <TradingViewChart symbol={symbolToShow} /> )}
 
       <div style={{ marginTop: '2rem' }}>
         <h3>📈 الأسهم المرشحة للصعود</h3>
