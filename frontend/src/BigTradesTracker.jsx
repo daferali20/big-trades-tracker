@@ -1,11 +1,9 @@
-// BigTradesTracker.jsx
+import './BigTradesTracker.css';
+
 import React, { useEffect, useState } from 'react';
 import TradingViewChart from './TradingViewChart';
 import StockCard from './StockCard';
 import TradesTable from './TradesTable';
-import './BigTradesTracker.css';
-
-const apiKey = "YOUR_POLYGON_API_KEY";
 
 function BigTradesTracker() {
   const [trades, setTrades] = useState([]);
@@ -14,10 +12,13 @@ function BigTradesTracker() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  const apiKey = 'WT3I1S4AXdekRj1qHZDD9TyD8Fx5tQjC'; // ضع مفتاح API هنا
+
   const fetchStockInfo = async (symbol) => {
     try {
       setLoading(true);
       setError(null);
+
       const [tickerRes, lastTradeRes, ma50Res, ma200Res] = await Promise.all([
         fetch(`https://api.polygon.io/v3/reference/tickers/${symbol}?apiKey=${apiKey}`),
         fetch(`https://api.polygon.io/v2/last/trade/${symbol}?apiKey=${apiKey}`),
@@ -36,10 +37,10 @@ function BigTradesTracker() {
         symbol,
         name: tickerData.results?.name || '',
         currentPrice: lastTrade.results?.p || 0,
-        week52High: tickerData.results?.week52High || 0,
-        week52Low: tickerData.results?.week52Low || 0,
-        ma50: ma50.results?.values[0]?.value || 0,
-        ma200: ma200.results?.values[0]?.value || 0,
+        week52High: tickerData.results?.week_52_high || 0,
+        week52Low: tickerData.results?.week_52_low || 0,
+        ma50: ma50.results?.values?.[0]?.value || 0,
+        ma200: ma200.results?.values?.[0]?.value || 0,
         ma35: 0,
         ma360: 0
       };
@@ -55,15 +56,20 @@ function BigTradesTracker() {
   useEffect(() => {
     const loadInitialData = async () => {
       const tslaData = await fetchStockInfo('TSLA');
-      if (tslaData) setStockInfo(prev => ({ ...prev, TSLA: tslaData }));
+      if (tslaData) {
+        setStockInfo(prev => ({ ...prev, TSLA: tslaData }));
+      }
     };
     loadInitialData();
 
     const socket = new WebSocket("wss://delayed.polygon.io/stocks");
+
     socket.onmessage = async (event) => {
       const data = JSON.parse(event.data);
+
       if (data.price * data.volume >= 1000) {
         setTrades(prev => [data, ...prev.slice(0, 49)]);
+
         if (!stockInfo[data.symbol]) {
           const newStockData = await fetchStockInfo(data.symbol);
           if (newStockData) {
@@ -72,29 +78,38 @@ function BigTradesTracker() {
         }
       }
     };
-    socket.onerror = (err) => setError("فقدان الاتصال بخادم الصفقات الحية");
-    socket.onclose = () => console.log("❌ WebSocket closed");
-    return () => socket.close();
-  }, [stockInfo]);
 
-  const getRecommendations = () => {
-    const ups = [], downs = [];
-    for (const [symbol, info] of Object.entries(stockInfo)) {
-      if (info.currentPrice > info.ma50 && info.currentPrice > info.ma200) ups.push(symbol);
-      if (info.currentPrice < info.ma50 && info.currentPrice < info.ma200) downs.push(symbol);
-    }
-    return { ups, downs };
-  };
+    socket.onerror = (err) => {
+      console.error("WebSocket Error:", err);
+      setError("فقدان الاتصال بخادم الصفقات الحية");
+    };
+
+    socket.onclose = () => console.log("❌ تم إغلاق اتصال WebSocket");
+
+    return () => {
+      socket.close();
+    };
+  }, []);
 
   const getTopGainers = () => {
     return Object.values(stockInfo)
-      .filter(info => info.week52Low > 0)
+      .filter(info => info?.week52Low > 0)
       .map(info => ({
         symbol: info.symbol,
         changePercent: ((info.currentPrice - info.week52Low) / info.week52Low) * 100
       }))
       .sort((a, b) => b.changePercent - a.changePercent)
       .slice(0, 5);
+  };
+
+  const getRecommendations = () => {
+    const ups = [], downs = [];
+    for (const [symbol, info] of Object.entries(stockInfo)) {
+      if (!info) continue;
+      if (info.currentPrice > info.ma50 && info.currentPrice > info.ma200) ups.push(symbol);
+      if (info.currentPrice < info.ma50 && info.currentPrice < info.ma200) downs.push(symbol);
+    }
+    return { ups, downs };
   };
 
   const { ups, downs } = getRecommendations();
@@ -126,7 +141,7 @@ function BigTradesTracker() {
         <TradesTable trades={trades} />
       </div>
 
-      <div style={{ margin: '1rem 0' }}>
+      <div style={{ marginTop: '1rem' }}>
         <label htmlFor="stock-select">اختر السهم لعرض تفاصيله:</label>
         <select
           id="stock-select"
@@ -140,23 +155,24 @@ function BigTradesTracker() {
         </select>
       </div>
 
-      {symbolToShow && (
+      {symbolToShow && stockInfo[symbolToShow] && (
         <div className="technical-analysis">
           <h3>📈 التحليل الفني لسهم {symbolToShow}</h3>
+
           <div className="indicators-grid" style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginTop: '1rem' }}>
-            {["week52High", "week52Low", "ma50", "ma200", "ma35", "ma360", "currentPrice"].map((key, i) => (
+            {[
+              ["🔺 أعلى سعر 52 أسبوع", "week52High"],
+              ["🔻 أدنى سعر 52 أسبوع", "week52Low"],
+              ["📊 متوسط 50 يوم", "ma50"],
+              ["📊 متوسط 200 يوم", "ma200"],
+              ["📊 متوسط 35 يوم", "ma35"],
+              ["📊 متوسط 360 يوم", "ma360"],
+              ["💲 السعر الحالي", "currentPrice"]
+            ].map(([label, key]) => (
               <StockCard
                 key={key}
-                label={[
-                  "🔺 أعلى سعر 52 أسبوع",
-                  "🔻 أدنى سعر 52 أسبوع",
-                  "📊 متوسط 50 يوم",
-                  "📊 متوسط 200 يوم",
-                  "📊 متوسط 35 يوم",
-                  "📊 متوسط 360 يوم",
-                  "💲 السعر الحالي"
-                ][i]}
-                value={stockInfo[symbolToShow][key]}
+                label={label}
+                value={stockInfo[symbolToShow]?.[key] ?? '...'}
                 highlight={
                   key === 'currentPrice'
                     ? (stockInfo[symbolToShow][key] > stockInfo[symbolToShow].ma50 ? '#2ecc71' : '#e74c3c')
@@ -168,7 +184,7 @@ function BigTradesTracker() {
         </div>
       )}
 
-      {symbolToShow && ( <TradingViewChart symbol={symbolToShow} /> )}
+      {symbolToShow && <TradingViewChart symbol={symbolToShow} />}
 
       <div style={{ marginTop: '2rem' }}>
         <h3>📈 الأسهم المرشحة للصعود</h3>
@@ -177,10 +193,12 @@ function BigTradesTracker() {
         <h3 style={{ marginTop: '1rem' }}>📉 الأسهم المرشحة للهبوط</h3>
         <div>{downs.length > 0 ? downs.join(", ") : "لا يوجد حالياً"}</div>
 
-        <h3 style={{ marginTop: '1rem' }}>🚀 الأسهم الأكثر ارتفاعاً عن أدنى مستوى 52 أسبوع</h3>
+        <h3 style={{ marginTop: '2rem' }}>🚀 الأسهم الأكثر ارتفاعاً عن أدنى مستوى 52 أسبوع</h3>
         <ul>
           {getTopGainers().map(item => (
-            <li key={item.symbol}>{item.symbol} - {item.changePercent.toFixed(2)}%</li>
+            <li key={item.symbol}>
+              {item.symbol} - {item.changePercent.toFixed(2)}%
+            </li>
           ))}
         </ul>
       </div>
