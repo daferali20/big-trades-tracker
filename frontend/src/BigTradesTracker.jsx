@@ -97,6 +97,17 @@ function BigTradesTracker() {
       socket.close(); // تنظيف الاتصال عند إلغاء التثبيت
     };
   }, [ ]);
+//الاسهم الاكثر ارتفاعا
+const getTopGainers = () => {
+  return Object.values(stockInfo)
+    .filter(info => info.week52Low > 0)
+    .map(info => ({
+      symbol: info.symbol,
+      changePercent: ((info.currentPrice - info.week52Low) / info.week52Low) * 100
+    }))
+    .sort((a, b) => b.changePercent - a.changePercent)
+    .slice(0, 5);
+};
 
   // 4. دالة تحليل التوصيات
   const getRecommendations = () => {
@@ -199,51 +210,28 @@ function BigTradesTracker() {
             </div>
           ) : (
             stockInfo[symbolToShow] && (
-              <div className="indicators-grid" style={{ 
-                display: 'flex', 
-                flexWrap: 'wrap', 
-                gap: '1rem', 
-                marginTop: '1rem'
-              }}>
-                {[
-                  ["🔺 أعلى سعر 52 أسبوع", "week52High"],
-                  ["🔻 أدنى سعر 52 أسبوع", "week52Low"],
-                  ["📊 متوسط 50 يوم", "ma50"],
-                  ["📊 متوسط 200 يوم", "ma200"],
-                  ["📊 متوسط 35 يوم", "ma35"],
-                  ["📊 متوسط 360 يوم", "ma360"],
-                  ["💲 السعر الحالي", "currentPrice"]
-                ].map(([label, key]) => (
-                  <div 
-                    key={key}
-                    className="indicator-card"
-                    style={{
-                      background: '#f9f9f9',
-                      padding: '1rem',
-                      borderRadius: '10px',
-                      minWidth: '150px',
-                      boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
-                      textAlign: 'center',
-                      transition: 'transform 0.2s'
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.03)'}
-                    onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                  >
-                    <div style={{ fontSize: '0.9rem', color: '#666' }}>{label}</div>
-                    <div style={{ 
-                      fontWeight: 'bold', 
-                      fontSize: '1.2rem',
-                      color: key === 'currentPrice' ? 
-                        (stockInfo[symbolToShow][key] > stockInfo[symbolToShow]['ma50'] ? '#2ecc71' : '#e74c3c') 
-                        : 'inherit'
-                    }}>
-                      {typeof stockInfo[symbolToShow][key] === 'number' ? 
-                        stockInfo[symbolToShow][key].toFixed(2) : 
-                        stockInfo[symbolToShow][key]}
-                    </div>
-                  </div>
-                ))}
-              </div>
+             <div className="indicators-grid" style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginTop: '1rem' }}>
+  {[
+    ["🔺 أعلى سعر 52 أسبوع", "week52High"],
+    ["🔻 أدنى سعر 52 أسبوع", "week52Low"],
+    ["📊 متوسط 50 يوم", "ma50"],
+    ["📊 متوسط 200 يوم", "ma200"],
+    ["📊 متوسط 35 يوم", "ma35"],
+    ["📊 متوسط 360 يوم", "ma360"],
+    ["💲 السعر الحالي", "currentPrice"]
+  ].map(([label, key]) => (
+    <StockCard
+      key={key}
+      label={label}
+      value={stockInfo[symbolToShow][key]}
+      highlight={
+        key === 'currentPrice'
+          ? (stockInfo[symbolToShow][key] > stockInfo[symbolToShow].ma50 ? '#2ecc71' : '#e74c3c')
+          : undefined
+      }
+    />
+  ))}
+</div>
             )
           )}
 
