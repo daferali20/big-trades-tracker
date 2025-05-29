@@ -15,44 +15,43 @@ function BigTradesTracker() {
   const apiKey = 'd0s84hpr01qkkpltj8j0d0s84hpr01qkkpltj8jg'; // ضع مفتاح API هنا
 
   const fetchStockInfo = async (symbol) => {
-    try {
-      setLoading(true);
-      setError(null);
+  try {
+    setLoading(true);
+    setError(null);
 
-      const [profileRes, quoteRes, ma50Res, ma200Res] = await Promise.all([
-        fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${symbol}&token=${apiKey}`),
-        fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${apiKey}`),
-        fetch(`https://finnhub.io/api/v1/indicator?symbol=${symbol}&resolution=D&indicator=sma&timeperiod=50&token=${apiKey}`),
-        fetch(`https://finnhub.io/api/v1/indicator?symbol=${symbol}&resolution=D&indicator=sma&timeperiod=200&token=${apiKey}`)
-      ]);
+    const [profileRes, quoteRes, ma50Res, ma200Res] = await Promise.all([
+      fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${symbol}&token=${apiKey}`),
+      fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${apiKey}`),
+      fetch(`https://finnhub.io/api/v1/indicator?symbol=${symbol}&resolution=D&indicator=sma&timeperiod=50&token=${apiKey}`),
+      fetch(`https://finnhub.io/api/v1/indicator?symbol=${symbol}&resolution=D&indicator=sma&timeperiod=200&token=${apiKey}`)
+    ]);
 
-      const [profile, quote, ma50, ma200] = await Promise.all([
-        profileRes.json(),
-        quoteRes.json(),
-        ma50Res.json(),
-        ma200Res.json()
-      ]);
+    const [profile, quote, ma50, ma200] = await Promise.all([
+      profileRes.json(),
+      quoteRes.json(),
+      ma50Res.json(),
+      ma200Res.json()
+    ]);
 
-      return {
-        symbol,
-        name: profile.name || symbol,
-        currentPrice: quote.c || 0,
-        week52High: quote.h || 0,
-        week52Low: quote.l || 0,
-        ma50: ma50?.technicalAnalysis?.sma?.[0] || 0,
-        ma200: ma200?.technicalAnalysis?.sma?.[0] || 0,
-        ma35: 0,
-        ma360: 0
-      };
-    } catch (err) {
-      console.error("Error fetching stock info from Finnhub:", err);
-      setError("فشل في جلب بيانات السهم من Finnhub.");
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  };
-
+    return {
+      symbol,
+      name: profile.name || symbol,
+      currentPrice: quote.c || 0,
+      week52High: quote.h || 0, // لا يتوفر مباشرة في Finnhub المجاني
+      week52Low: quote.l || 0,  // لا يتوفر مباشرة في Finnhub المجاني
+      ma50: ma50?.technicalAnalysis?.sma?.[0] || 0,
+      ma200: ma200?.technicalAnalysis?.sma?.[0] || 0,
+      ma35: 0,
+      ma360: 0
+    };
+  } catch (err) {
+    console.error("Error fetching stock info from Finnhub:", err);
+    setError("فشل في جلب بيانات السهم من Finnhub.");
+    return null;
+  } finally {
+    setLoading(false);
+  }
+};
   useEffect(() => {
     const loadInitialData = async () => {
       const tslaData = await fetchStockInfo('TSLA');
@@ -67,8 +66,7 @@ function BigTradesTracker() {
     socket.onmessage = async (event) => {
       const data = JSON.parse(event.data);
 
-      // تعديل الشرط ليشمل فقط الأسهم بين 25 إلى 500 دولار
-      if (data.price >= 25 && data.price <= 500 && data.price * data.volume >= 1000) {
+      if (data.price * data.volume >= 1000) {
         setTrades(prev => [data, ...prev.slice(0, 49)]);
 
         if (!stockInfo[data.symbol]) {
@@ -94,11 +92,9 @@ function BigTradesTracker() {
 
   const getTopGainers = () => {
     return Object.values(stockInfo)
-      .filter(info => info?.week52Low > 0 && info.currentPrice >= 25 && info.currentPrice <= 500)
+      .filter(info => info?.week52Low > 0)
       .map(info => ({
         symbol: info.symbol,
-        name: info.name,
-        currentPrice: info.currentPrice,
         changePercent: ((info.currentPrice - info.week52Low) / info.week52Low) * 100
       }))
       .sort((a, b) => b.changePercent - a.changePercent)
@@ -108,7 +104,7 @@ function BigTradesTracker() {
   const getRecommendations = () => {
     const ups = [], downs = [];
     for (const [symbol, info] of Object.entries(stockInfo)) {
-      if (!info || info.currentPrice < 25 || info.currentPrice > 500) continue;
+      if (!info) continue;
       if (info.currentPrice > info.ma50 && info.currentPrice > info.ma200) ups.push(symbol);
       if (info.currentPrice < info.ma50 && info.currentPrice < info.ma200) downs.push(symbol);
     }
@@ -123,23 +119,21 @@ function BigTradesTracker() {
       {loading && <div className="loading-indicator">جاري تحميل البيانات...</div>}
       {error && <div className="error-message">{error}</div>}
 
-      <h2 style={{ textAlign: 'center' }}>📊 الصفقات الكبيرة للأسهم ($25-$500)</h2>
+      <h2 style={{ textAlign: 'center' }}>📊 الصفقات الكبيرة للأسهم</h2>
 
       <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
         <div className="sidebar">
           <h4>🧾 قائمة الأسهم</h4>
           <ul>
-            {Object.keys(stockInfo)
-              .filter(symbol => stockInfo[symbol]?.currentPrice >= 25 && stockInfo[symbol]?.currentPrice <= 500)
-              .map(symbol => (
-                <li
-                  key={symbol}
-                  onClick={() => setSelectedSymbol(symbol)}
-                  className={symbol === symbolToShow ? 'active-symbol' : ''}
-                >
-                  {symbol}
-                </li>
-              ))}
+            {Object.keys(stockInfo).map(symbol => (
+              <li
+                key={symbol}
+                onClick={() => setSelectedSymbol(symbol)}
+                className={symbol === symbolToShow ? 'active-symbol' : ''}
+              >
+                {symbol}
+              </li>
+            ))}
           </ul>
         </div>
 
@@ -154,11 +148,9 @@ function BigTradesTracker() {
           onChange={(e) => setSelectedSymbol(e.target.value)}
           style={{ marginRight: '1rem', padding: '0.3rem', minWidth: '150px' }}
         >
-          {Object.keys(stockInfo)
-            .filter(symbol => stockInfo[symbol]?.currentPrice >= 25 && stockInfo[symbol]?.currentPrice <= 500)
-            .map((symbol) => (
-              <option key={symbol} value={symbol}>{symbol}</option>
-            ))}
+          {Object.keys(stockInfo).map((symbol) => (
+            <option key={symbol} value={symbol}>{symbol}</option>
+          ))}
         </select>
       </div>
 
@@ -194,17 +186,17 @@ function BigTradesTracker() {
       {symbolToShow && <TradingViewChart symbol={symbolToShow} />}
 
       <div style={{ marginTop: '2rem' }}>
-        <h3>📈 الأسهم المرشحة للصعود ($25-$500)</h3>
+        <h3>📈 الأسهم المرشحة للصعود</h3>
         <div>{ups.length > 0 ? ups.join(", ") : "لا يوجد حالياً"}</div>
 
-        <h3 style={{ marginTop: '1rem' }}>📉 الأسهم المرشحة للهبوط ($25-$500)</h3>
+        <h3 style={{ marginTop: '1rem' }}>📉 الأسهم المرشحة للهبوط</h3>
         <div>{downs.length > 0 ? downs.join(", ") : "لا يوجد حالياً"}</div>
 
-        <h3 style={{ marginTop: '2rem' }}>🚀 الأسهم الأكثر ارتفاعاً عن أدنى مستوى 52 أسبوع ($25-$500)</h3>
+        <h3 style={{ marginTop: '2rem' }}>🚀 الأسهم الأكثر ارتفاعاً عن أدنى مستوى 52 أسبوع</h3>
         <ul>
           {getTopGainers().map(item => (
             <li key={item.symbol}>
-              {item.symbol} ({item.name}) - ${item.currentPrice.toFixed(2)} - ▲ {item.changePercent.toFixed(2)}%
+              {item.symbol} - {item.changePercent.toFixed(2)}%
             </li>
           ))}
         </ul>
