@@ -1,9 +1,8 @@
-import './BigTradesTracker.css';
-
 import React, { useEffect, useState } from 'react';
 import TradingViewChart from './TradingViewChart';
 import StockCard from './StockCard';
 import TradesTable from './TradesTable';
+import './BigTradesTracker.css';
 
 function BigTradesTracker() {
   const [trades, setTrades] = useState([]);
@@ -12,46 +11,48 @@ function BigTradesTracker() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const apiKey = 'd0s84hpr01qkkpltj8j0d0s84hpr01qkkpltj8jg'; // ضع مفتاح API هنا
+  const apiKey = 'd0s84hpr01qkkpltj8j0d0s84hpr01qkkpltj8jg';
 
+  // جلب بيانات السهم من Finnhub (باقي الكود كما لديك)
   const fetchStockInfo = async (symbol) => {
-  try {
-    setLoading(true);
-    setError(null);
+    try {
+      setLoading(true);
+      setError(null);
 
-    const [profileRes, quoteRes, ma50Res, ma200Res] = await Promise.all([
-      fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${symbol}&token=${apiKey}`),
-      fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${apiKey}`),
-      fetch(`https://finnhub.io/api/v1/indicator?symbol=${symbol}&resolution=D&indicator=sma&timeperiod=50&token=${apiKey}`),
-      fetch(`https://finnhub.io/api/v1/indicator?symbol=${symbol}&resolution=D&indicator=sma&timeperiod=200&token=${apiKey}`)
-    ]);
+      const [profileRes, quoteRes, ma50Res, ma200Res] = await Promise.all([
+        fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${symbol}&token=${apiKey}`),
+        fetch(`https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${apiKey}`),
+        fetch(`https://finnhub.io/api/v1/indicator?symbol=${symbol}&resolution=D&indicator=sma&timeperiod=50&token=${apiKey}`),
+        fetch(`https://finnhub.io/api/v1/indicator?symbol=${symbol}&resolution=D&indicator=sma&timeperiod=200&token=${apiKey}`)
+      ]);
 
-    const [profile, quote, ma50, ma200] = await Promise.all([
-      profileRes.json(),
-      quoteRes.json(),
-      ma50Res.json(),
-      ma200Res.json()
-    ]);
+      const [profile, quote, ma50, ma200] = await Promise.all([
+        profileRes.json(),
+        quoteRes.json(),
+        ma50Res.json(),
+        ma200Res.json()
+      ]);
 
-    return {
-      symbol,
-      name: profile.name || symbol,
-      currentPrice: quote.c || 0,
-      week52High: quote.h || 0, // لا يتوفر مباشرة في Finnhub المجاني
-      week52Low: quote.l || 0,  // لا يتوفر مباشرة في Finnhub المجاني
-      ma50: ma50?.technicalAnalysis?.sma?.[0] || 0,
-      ma200: ma200?.technicalAnalysis?.sma?.[0] || 0,
-      ma35: 0,
-      ma360: 0
-    };
-  } catch (err) {
-    console.error("Error fetching stock info from Finnhub:", err);
-    setError("فشل في جلب بيانات السهم من Finnhub.");
-    return null;
-  } finally {
-    setLoading(false);
-  }
-};
+      return {
+        symbol,
+        name: profile.name || symbol,
+        currentPrice: quote.c || 0,
+        week52High: quote.h || 0,
+        week52Low: quote.l || 0,
+        ma50: ma50?.technicalAnalysis?.sma?.[0] || 0,
+        ma200: ma200?.technicalAnalysis?.sma?.[0] || 0,
+        ma35: 0,
+        ma360: 0
+      };
+    } catch (err) {
+      console.error("Error fetching stock info from Finnhub:", err);
+      setError("فشل في جلب بيانات السهم من Finnhub.");
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     const loadInitialData = async () => {
       const tslaData = await fetchStockInfo('TSLA');
@@ -61,19 +62,19 @@ function BigTradesTracker() {
     };
     loadInitialData();
 
-    const socket = new WebSocket("wss://delayed.polygon.io/stocks");
+    // هنا اتصال الـ WebSocket بالـ backend الخاص بك
+    const socket = new WebSocket("ws://localhost:8000/ws/trades"); // استبدلها بـ URL الباك اند الحي
 
     socket.onmessage = async (event) => {
       const data = JSON.parse(event.data);
 
-      if (data.price * data.volume >= 1000) {
-        setTrades(prev => [data, ...prev.slice(0, 49)]);
+      // تحديث صفقات مع جلب بيانات سهم جديد إذا لم تكن موجودة
+      setTrades(prev => [data, ...prev.slice(0, 49)]);
 
-        if (!stockInfo[data.symbol]) {
-          const newStockData = await fetchStockInfo(data.symbol);
-          if (newStockData) {
-            setStockInfo(prev => ({ ...prev, [data.symbol]: newStockData }));
-          }
+      if (!stockInfo[data.sym]) {
+        const newStockData = await fetchStockInfo(data.sym);
+        if (newStockData) {
+          setStockInfo(prev => ({ ...prev, [data.sym]: newStockData }));
         }
       }
     };
@@ -88,7 +89,9 @@ function BigTradesTracker() {
     return () => {
       socket.close();
     };
-  }, []);
+  }, [stockInfo]);
+
+  // باقي دوالك getTopGainers, getRecommendations، والـ JSX كما هي في الكود الذي أرسلته
 
   const getTopGainers = () => {
     return Object.values(stockInfo)
@@ -112,7 +115,7 @@ function BigTradesTracker() {
   };
 
   const { ups, downs } = getRecommendations();
-  const symbolToShow = selectedSymbol || (trades.length > 0 ? trades[0].symbol : null);
+  const symbolToShow = selectedSymbol || (trades.length > 0 ? trades[0].sym : null);
 
   return (
     <div className="big-trades-container">
