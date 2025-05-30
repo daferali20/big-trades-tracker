@@ -14,7 +14,7 @@ status_placeholder = st.empty()
 trades_placeholder = st.empty()
 
 # إعداد WebSocket URL (تأكد من تعديل العنوان إلى عنوان backend الخاص بك)
-WEBSOCKET_URL = "ws://big-trades-tracker.onrender.com/ws/trades"
+WEBSOCKET_URL = "ws://localhost:8000/ws/trades"
 
 async def listen_trades():
     async with connect(WEBSOCKET_URL) as websocket:
