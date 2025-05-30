@@ -1,17 +1,5 @@
-# الأساسيات لتشغيل FastAPI
-fastapi==0.109.0
-uvicorn==0.27.0
-
-# لطلبات HTTP
-httpx==0.27.0
-
-# إصدارات متوافقة من Pydantic
-pydantic==2.11.5
-pydantic-core==2.16.3
-
-# حزم إضافية قد تحتاجها
-python-multipart==0.0.6  # لمعالجة بيانات النماذج
-websockets==12.0  # لدعم WebSocket
-
-# خيارات التثبيت
+fastapi>=0.109.0
+httpx>=0.27.0
+uvicorn>=0.27.0
+pydantic>=2.11.5
 --prefer-binary
