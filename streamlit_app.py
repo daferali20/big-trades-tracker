@@ -2,7 +2,7 @@ import streamlit as st
 import requests
 
 # 🔗 عنوان السيرفر الخلفي على Render
-API_URL = "https://your-app-name.onrender.com"
+API_URL = "https://big-trades-tracker.onrender.com"
 
 st.title("📈 Big Trades Tracker")
 
