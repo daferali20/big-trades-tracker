@@ -1,11 +1,11 @@
 import streamlit as st
 import requests
-import './BigTradesTracker.css';
+import './fronten/src/BigTradesTracker.css';
 
 import React, { useEffect, useState } from 'react';
-import TradingViewChart from './TradingViewChart';
-import StockCard from './StockCard';
-import TradesTable from './TradesTable';
+import TradingViewChart from './fronten/src/TradingViewChart';
+import StockCard from './fronten/src/StockCard';
+import TradesTable from './fronten/src/TradesTable';
 
 function BigTradesTracker() {
   const [trades, setTrades] = useState([]);
