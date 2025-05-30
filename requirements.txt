@@ -3,5 +3,5 @@ httpx
 uvicorn
 pydantic>=2.0
 --prefer-binary
-
+pydantic-core==2.16.3 --no-binary pydantic-core
 
