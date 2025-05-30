@@ -7,4 +7,4 @@ services:
     startCommand: uvicorn polygon_ws_backend:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: API_KEY
-        value: WT3I1S4AXdekRj1qHZDD9TyD8Fx5tQjC
+        value: 70D7rupiLla29W4BPvlIr9UGp25_XnuQ
