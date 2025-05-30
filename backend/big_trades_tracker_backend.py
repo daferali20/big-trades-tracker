@@ -120,6 +120,12 @@ async def websocket_endpoint(websocket: WebSocket):
         logger.error(f"WebSocket error: {str(e)}")
         await websocket.close(code=1011)
 
+from fastapi import FastAPI
+
+app = FastAPI()
+@app.get("/")
+def hello():
+    return {"message": "✅ Backend running with Pydantic 1.10.13"}
 # REST Endpoints
 @app.get("/config", response_model=Config)
 def get_config():
