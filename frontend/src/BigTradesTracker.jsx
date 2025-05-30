@@ -63,7 +63,7 @@ function BigTradesTracker() {
     loadInitialData();
 
     // هنا اتصال الـ WebSocket بالـ backend الخاص بك
-    const socket = new WebSocket("ws://localhost:8000/ws/trades"); // استبدلها بـ URL الباك اند الحي
+    const socket = new WebSocket("ws://big-trades-tracker.onrender.com0/ws/trades"); // استبدلها بـ URL الباك اند الحي
 
     socket.onmessage = async (event) => {
       const data = JSON.parse(event.data);
