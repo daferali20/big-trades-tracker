@@ -20,7 +20,7 @@ app.add_middleware(
 )
 
 # ===== Configuration =====
-API_KEY = "WT3I1S4AXdekRj1qHZDD9TyD8Fx5tQjC"
+API_KEY = "70D7rupiLla29W4BPvlIr9UGp25_XnuQ"
 WATCHED_SYMBOLS = ["AAPL", "MSFT", "GOOGL", "AMZN", "META"]  # Example: Top S&P 500 stocks
 LARGE_TRADE_THRESHOLD = 100  # in dollars (e.g., $100K)
 
