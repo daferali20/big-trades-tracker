@@ -66,7 +66,7 @@ function BigTradesTracker() {
     socket.onmessage = async (event) => {
       const data = JSON.parse(event.data);
 
-      if (data.price * data.volume >= 1000) {
+      if (data.price * data.volume >= 100) {
         setTrades(prev => [data, ...prev.slice(0, 49)]);
 
         if (!stockInfo[data.symbol]) {
